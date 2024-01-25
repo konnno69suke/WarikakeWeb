@@ -1,0 +1,48 @@
+﻿@model IEnumerable<WarikakeWeb.Models.MGroupDisp>
+
+@{
+    ViewData["Title"] = "グループ一覧";
+}
+
+<h1>グループ一覧</h1>
+
+<p>
+    <a asp-action="Create">新規登録</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.groupName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.masterName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.startDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                    @Html.DisplayFor(modelItem => item.groupName)
+            </td>
+            <td>
+                    @Html.DisplayFor(modelItem => item.masterName)
+            </td>
+            <td>
+                    @Html.DisplayFor(modelItem => item.startDate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">編集</a> |
+                    <a asp-area="" asp-controller="MMembers" asp-action="Index" asp-route-id="@item.Id">メンバー</a> | 
+                    <a asp-action="Details" asp-route-id="@item.Id">詳細</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">解散</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

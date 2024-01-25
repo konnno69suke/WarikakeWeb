@@ -1,0 +1,68 @@
+﻿@model WarikakeWeb.Models.WarikakeDisp
+
+@{
+    ViewData["Title"] = "精算";
+}
+
+<h1>精算</h1>
+
+<h3>以下の内容で精算しますか？</h3>
+<div>
+    <h4>支払データ</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CostDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CostDate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CostDisp)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CostDisp)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.GenreName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.GenreName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CostTitle)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CostTitle)
+        </dd>
+        <hr />
+        @for (int i = 0; i < Model.Pays.Count; i++)
+        {
+            <table class="table">
+                <tr>
+                    <td class="col-sm-2">
+                        @Html.DisplayFor(model => model.Pays[i].PayUserName)
+                    </td>
+                    <td class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.Pays[i].PayDisp)
+                        :
+                        @Html.DisplayFor(model => model.Pays[i].PayDisp)
+                    </td>
+                    <td class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.Repays[i].RepayDisp)
+                        :
+                        @Html.DisplayFor(model => model.Repays[i].RepayDisp)
+                    </td>
+                </tr>
+            </table>
+        }
+        @ViewBag.WariProcResult
+        <hr />
+    </dl>
+
+    <form asp-action="Settlement">
+        <input type="hidden" asp-for="CostId" />
+        <input type="submit" value="精算" class="btn btn-danger" /> |
+        <a asp-action="Index">一覧に戻る</a>
+    </form>
+</div>

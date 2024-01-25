@@ -1,0 +1,35 @@
+﻿@model WarikakeWeb.Models.MMemberDisp
+
+@{
+    ViewData["Title"] = "メンバー除名";
+}
+
+<h1>除名</h1>
+
+<h3>本当にこのグループからこのメンバーを外しますか？</h3>
+<div>
+    <h4>メンバー</h4>
+    <hr />
+    @ViewBag.Message
+    <form asp-action="Delete">
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.groupName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.groupName)
+                <input type="hidden" asp-for="groupName" />
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.userName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.userName)
+                <input type="hidden" asp-for="userName" />
+            </dd>
+        </dl>
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="除名" class="btn btn-danger" /> |
+        <a asp-action="Index">一覧に戻る</a>
+    </form>
+</div>

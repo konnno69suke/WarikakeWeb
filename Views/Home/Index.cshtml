@@ -1,0 +1,63 @@
+﻿@model WarikakeWeb.Models.HomeDisp
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">割勘家計簿</h1>
+    <div>
+        @{
+            if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("GroupId") != null)
+            {
+                <p>
+                    @Html.DisplayNameFor(model => model.GroupName)
+                    :
+                    @Html.DisplayFor(model => model.GroupName)
+                </p>
+                <p>
+                    @Html.DisplayNameFor(model => model.UserName)
+                     : 
+                    @Html.DisplayFor(model => model.UserName)
+                </p>
+                <div class="container">
+                    <p>
+                        <a asp-area="" asp-controller="Warikan" asp-action="Index">未精算一覧</a>
+                    </p>
+                </div>
+                if (Model.GroupUserId == Model.UserId){
+                    <div class="container">
+                        マスタメンテナンス
+                        <p>
+                            <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
+                            <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
+                            <a asp-area="" asp-controller="MGroups" asp-action="Index">グループ</a>
+                            <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
+                            <a asp-area="" asp-controller="CsvImport" asp-action="Import">CSVインポート</a>
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="container">
+                        マスタメンテナンス
+                        <p>
+                            <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
+                            <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
+                            <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
+                        </p>
+                    </div>
+                }
+                <p>
+                    <a asp-area="" asp-controller="Home" asp-action="Logout">ログアウト</a>
+                </p>
+            }
+            else
+            {
+                <p>
+                    <a asp-area="" asp-controller="Home" asp-action="Login">ログイン</a>
+                </p>
+            }
+        }
+    </div>
+
+</div>

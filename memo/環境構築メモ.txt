@@ -1,0 +1,152 @@
+SSMSからは接続文字列が不明だったため、
+VSから接続したところ確認できた。
+Data Source=AMP\SQLEXPRESS;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False
+appsessings.jsonをバックアップ取った上で上記文字列に書き換え
+Add-Migrationしてみたが差分無し。これはあくまでプロジェクト側のようだ。
+なので直接Update-Databaseを実行したところ、途中で失敗した。
+対象のmigrationファイルを参照
+
+七転八倒だったがなんとかクリア。
+過去のMigrationファイルをいったん削除して一からAdd-Migrationし直すことで綺麗なMigrationファイルを作成し、
+それを新DBに接続して実行した。
+
+IISの有効化はOSのその辺のUIは毎回変わるので敢えて書かない。有効化は簡単。
+停止はサービスで停止を選べばよい。
+
+以下は要メモと思ったので記録
+IISを有効化したWindows 11で、.NET 8.0 MVC Webアプリケーションをインストールする手順を以下に示します。
+
+Visual Studioを開きます。Visual Studioで、.NET 8.0 MVC Webアプリケーションをビルドします。
+→一応その上のソリューションからビルドした。全部要るのか、それともアドバイスの通りアプリケーション部分だけで良いのかは後で確認。
+
+IIS Managerを開きます。Windowsキーを押して、IIS Managerを検索し、クリックします。
+Webサイトを作成します。IIS Managerで、左側のメニューから「サイト」を選択し、「新しいサイト」をクリックします。Webサイトの名前と物理パスを設定し、「OK」をクリックします。
+
+IISマネージャーでサイトを作成。サイトの名前はBSC、物理パスはC:\BSCとした。（IISのインストールされているドライブのルートが良く使われるらしい）
+バインドはhttpsにし、SSL証明書はIIS Express development certificateにした。
+これでブラウザアクセス時に警告がやかましいようであれば今後検討。
+ビルドされたソリューションの全ファイルを丸ごとBSCフォルダ直下に配置(57MB。軽い。)
+IISマネージャーでアプリケーションを追加。エイリアスはBSC、物理パスはC:\BSC。
+これで起動を選ぶことになっているが、既に起動している？一旦停止して起動し直してもエラーっぽい反応はないが、
+異様に軽いので本当に動いているのかどうか……。
+ブラウザでhttps://localhost/BSCにアクセスしたところ、403エラー。
+IISマネージャーでアプリ選択後のディレクトリの参照をダブルクリックし＞有効にするを選択
+ブラウザからはファイルとディレクトリの階層構造が見えるだけ。
+アプリケーションプールの.Net CLRバージョンを「マネージドコードなし」にするという情報もあったが効果なし。
+
+
+アプリケーションプールを作成します。IIS Managerで、左側のメニューから「アプリケーションプール」を選択し、「新しいアプリケーションプール」をクリックします。アプリケーションプールの名前を設定し、「OK」をクリックします。
+アプリケーションを追加します。IIS Managerで、左側のメニューから「サイト」を選択し、作成したWebサイトを選択します。Webサイトの右側にある「アプリケーションの追加」をクリックし、アプリケーションプールを選択します。アプリケーションのエイリアスと物理パスを設定し、「OK」をクリックします。
+Web.configファイルを編集します。Web.configファイルを開き、データベース接続文字列を設定します。
+アプリケーションを起動します。IIS Managerで、左側のメニューから「サイト」を選択し、作成したWebサイトを選択します。Webサイトの右側にある「アプリケーションの起動」をクリックします。
+
+一応
+ASP.NET Core 8.0 Runtime (v8.0.1) - Windows Hosting Bundle
+だけダウンロードしてみる。(開発機なら入ってそうな気がするが……環境をきっちり分けているのかな？)
+状況は変わらず。
+タスクマネージャーからDBは動いている。アプリは表示名が何になるか不明で何から探したものか
+BSCやWarikakeで探したが見当たらないので、多分ない？
+
+VisualStudioからフォルダへの発行を行いC:\BSCフォルダに出した後、
+関係なさそうなファイルを全て捨ててブラウザからhttps://localhost/BSC/にアクセスしたところ、
+500エラーに変わった。
+
+HTTP Error 500.30 - ASP.NET Core app failed to start
+Common solutions to this issue:
+The app failed to start
+The app started but then stopped
+The app started but threw an exception during startup
+Troubleshooting steps:
+Check the system event log for error messages
+Enable logging the application process' stdout messages
+Attach a debugger to the application process and inspect
+
+500.30 インプロセス起動エラー
+ワーカー プロセスが失敗します。 アプリは起動しません。
+
+ASP.NET Core モジュールは .NET Core CLR の開始をインプロセスで試みますが、開始に失敗します。 プロセス起動時のエラーの原因は、通常、アプリケーション イベント ログと ASP.NET Core モジュールの stdout ログのエントリから判断できます。
+
+一般的なエラー条件:
+
+存在しないバージョンの ASP.NET Core 共有フレームワークが対象にされていて、アプリが正しく構成されていません。 対象のコンピューターにどのバージョンの ASP.NET Core 共有フレームワークがインストールされているかを確認します。
+Azure Key Vault を使用している場合、Key Vault へのアクセス許可がありません。 対象の Key Vault のアクセス ポリシーを確認して、正しいアクセス許可が付与されていることを確実にします。
+
+.netCLRバージョンに言及されているので、アプリケーションプールで弄った.net CLRバージョンをデフォルトに戻しサイト再起動。しかし500.30から変化なし。
+要らないと思って捨てたファイルを戻したところ、動作した。
+うーむ、これ結構しんどくないか？手でビルドして出たファイル全部置いて、かつその後発行したファイルも全部置く？どっちか１回で済まないのか？
+※おそらくだが２年前のdllなどもあるので、フォルダ指定して発行したら必要なファイルはすべて出るはず。先に手動で配置していたため重複したのだろう。
+
+Error.
+An error occurred while processing your request.
+Request ID: 00-9738aba194a985bf47a096e8f1910edd-a19f559d26447744-00
+
+Development Mode
+Swapping to Development environment will display more detailed information about the error that occurred.
+
+The Development environment shouldn't be enabled for deployed applications. It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the Development environment by setting the ASPNETCORE_ENVIRONMENT environment variable to Development and restarting the app.
+
+検索に時間がかかっており、DBにデータが無いというよりも
+DBと疎通していない？
+→VisualStudioで接続先をDBにしてみたところ即時でエラーが返ってくるので、
+発行したアプリの接続文字列がlocaldbだった。改めてDBに接続文字列を変えてIIS再起動した。
+だがそれでもまだだめっぽい。
+向き先を変えた上で一から発行し直し、その後IIS起動
+それでもやはりダメ。何かがWebアプリとDBアプリの疎通を妨げている（かつ、VisualStudioのデバッグモードはそれを回避している）
+
+Error.
+An error occurred while processing your request.
+Request ID: 00-de9ead8720e0a02be5b1f3f2fda6d260-8c1503538282f85b-00
+
+Development Mode
+Swapping to Development environment will display more detailed information about the error that occurred.
+
+The Development environment shouldn't be enabled for deployed applications. It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the Development environment by setting the ASPNETCORE_ENVIRONMENT environment variable to Development and restarting the app.
+開発モードが有効になっているため、だそう。
+ビルド時の設定か？
+ソリューションエクスプローラーで、アプリケーションのプロジェクトを右クリックし、[プロパティ]を選択します。
+[デバッグ]タブを選択し、デバッグ起動プロファイルUIを開くリンクを押下
+プロファイルの起動ウィンドウの[環境変数]セクションで、
+「ASPNETCORE_ENVIRONMENT」が定義されており「Development」になっているので「Production」に変更する
+特に保存ボタンらしきものが無いので一応保存ボタン押して再度発行。
+発行直後は400エラーになったのでIIS再起動。
+未だにDevelopment Modeと言われる。
+→アプリケーションのプロファイルは元に戻し、ビルド時にReleaseを選択して再度発行、IIS再起動
+これでも変わらない。
+再度プロファイルをProductionにして、さらにリリース時に前回ファイルを削除するを選択して発行、IIS再起動
+それでもDevelopment Modeとしてエラー。
+
+
+また、スマホから開発機のIPを叩いても疎通しない。
+
+いったんここまで！
+
+
+
+
+1/15
+https://wonwon-eater.com/core-apache-host/
+比較的有用そうなリンク。
+
+むしろdevelopでないから原因が見つからなかった？
+web.configでdevelopを指定したところ、以下のエラーが可視化された
+InvalidOperationException: An exception has been raised that is likely due to a transient failure. Consider enabling transient error resiliency by adding 'EnableRetryOnFailure' to the 'UseSqlServer' call.
+SqlException: このログインで要求されたデータベース "WarikakeWebContext" を開けません。ログインに失敗しました。 ユーザー 'IIS APPPOOL\BSC' はログインできませんでした。
+https://qiita.com/sakai3578/items/e16e2b37b9b5120afed2
+上記サイトから以下を転記
+WebアプリによるSQL Serverへのログイン許可設定
+データベース側で分かりにくいのがこの部分だと思います。
+IISのアプリケーションプール（簡単にはWebアプリのDB接続エージェントと考えていただければOKかと。）に対してSSMS側でログイン許可をする必要があります。
+
+SSMSにWindows認証で接続し、インスタンス→セキュリティ→ログインで右クリック、「新しいログイン」を選択。
+・ログイン名：IIS APPPOOL\DefaultAppPool
+・セキュリティ保護可能なリソース：次の項目に許可をチェックを追加。SQLの接続、データベースの作成、データベースの変更
+以上を設定してOK。
+
+↑これだけではエラーに変化が無かったが、OSユーザーではユーザーマッピングでWarikakeWebContextにチェックが入っているので、同様にチェックを入れた
+別のエラーになったが、即時で返ってきたのでIISから疎通したと思われる。
+SqlException: SELECT 権限がオブジェクト 'MUser'、データベース 'WarikakeWebContext'、スキーマ 'dbo' で拒否されました。
+https://qiita.com/portfoliokns3/items/071d8c447bea18abfecd
+
+↑同様にSSMSのマッピングでdb_readerとdb_writerが必要そうなので修正した。
+
+疎通した！

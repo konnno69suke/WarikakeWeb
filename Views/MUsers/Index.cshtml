@@ -1,0 +1,41 @@
+﻿@model IEnumerable<WarikakeWeb.Models.MUserDisp>
+
+@{
+    ViewData["Title"] = "ユーザー一覧";
+}
+
+<h1>ユーザー一覧</h1>
+
+<p>
+    <a asp-action="Create">新規登録</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">編集</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">詳細</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">退会</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

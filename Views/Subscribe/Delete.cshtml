@@ -1,0 +1,359 @@
+﻿@model WarikakeWeb.Models.SubscribeDisp
+
+@{
+    ViewData["Title"] = "一件削除";
+}
+
+<h1>削除</h1>
+
+<h3>本当に削除しますか？</h3>
+<div>
+    <h4>定期支払データ</h4>
+    <hr />
+    <dl class="row">
+
+        <input type="hidden" asp-for="SubscribeId" />
+        <span asp-validation-for="SubscribeId" class="text-danger"></span>
+        <input type="hidden" asp-for="status" />
+        <span asp-validation-for="status" class="text-danger"></span>
+        <input type="hidden" asp-for="CostStatus" />
+        <span asp-validation-for="CostStatus" class="text-danger"></span>
+        <div class="form-group">
+            <input type="hidden" asp-for="GroupId" />
+            <span asp-validation-for="GroupId" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <table>
+                <tr>
+                    <td>
+                        
+                    </td>
+                    <td>月</td>
+                    <td>
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m1" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m1" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m2" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m2" disabled  />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m3" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m3" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m4" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m4" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m5" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m5" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m6" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m6" disabled />
+                    </td>
+
+                </tr>
+                <tr>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m7" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m7" disabled />
+
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m8" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m8" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m9" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m9" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m10" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m10" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m11" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m11" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.m12" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.m12" disabled />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        
+                    </td>
+                    <td>曜日</td>
+                    <td>
+                        <label asp-for="dateSubscribe.r1" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.r1" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.r2" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.r2" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.r3" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.r3" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.r4" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.r4" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.r5" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.r5" disabled />
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w1" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w1" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w2" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w2" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w3" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w3" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w4" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w4" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w5" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w5" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w6" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w6" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.w7" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.w7" disabled />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        
+                    </td>
+                    <td>
+                        日
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d1" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d1" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d2" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d2" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d3" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d3" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d4" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d4" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d5" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d5" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d6" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d6" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d7" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d7" disabled />
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <label asp-for="dateSubscribe.d8" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d8" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d9" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d9" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d10" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d10" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d11" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d11" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d12" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d12" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d13" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d13" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d14" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d14" disabled />
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <label asp-for="dateSubscribe.d15" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d15" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d16" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d16" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d17" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d17" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d18" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d18" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d19" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d19" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d20" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d20" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d21" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d21" disabled />
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <label asp-for="dateSubscribe.d22" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d22" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d23" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d23" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d24" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d24" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d25" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d25" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d26" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d26" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d27" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d27" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d28" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d28" disabled />
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <label asp-for="dateSubscribe.d29" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d29" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d30" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d30" disabled />
+                    </td>
+                    <td>
+                        <label asp-for="dateSubscribe.d31" class="control-label"></label>
+                        <input type="checkbox" asp-for="dateSubscribe.d31" disabled />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CostDisp)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CostDisp)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.GenreName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.GenreName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CostTitle)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CostTitle)
+        </dd>
+        <hr />
+        @for (int i=0; i<Model.Pays.Count; i++)
+        {
+            <table class="table">
+                <tr>
+                    <td class="col-sm-2">
+                        @Html.DisplayFor(model => model.Pays[i].PayUserName)
+                    </td>
+                    <td class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.Pays[i].PayDisp)
+                        :
+                        @Html.DisplayFor(model => model.Pays[i].PayDisp)
+                    </td>
+                    <td class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.Repays[i].RepayDisp)
+                        :
+                        @Html.DisplayFor(model => model.Repays[i].RepayDisp)
+                    </td>
+                </tr>
+            </table>
+        }
+        @ViewBag.WariProcResult
+        <hr />
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="SubscribeId" />
+        <input type="submit" value="削除" class="btn btn-danger" /> |
+        <a asp-action="Index">一覧に戻る</a>
+    </form>
+</div>

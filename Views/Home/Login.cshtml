@@ -1,0 +1,28 @@
+﻿@model WarikakeWeb.Models.Login
+@{
+    ViewData["Title"] = "ログイン";
+}
+<h1>ログイン</h1>
+
+<h4>割勘家計簿</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Login">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="EMail" class="control-label"></label>
+                <input asp-for="EMail" class="form-control" />
+                <span asp-validation-for="EMail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password" class="control-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="ログイン" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>

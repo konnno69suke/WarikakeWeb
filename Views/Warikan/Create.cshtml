@@ -1,0 +1,112 @@
+﻿@model WarikakeWeb.Models.WarikakeDisp
+
+@{
+    ViewData["Title"] = "新規登録";
+}
+<script>
+    $(document).ready(function () {
+        resttext();
+        $('input[type="checkbox"]').change(resttext);
+        $('#CostAmount').change(calccost);
+    });
+</script>
+
+<h1>新規登録</h1>
+
+<h4>割勘家計簿</h4>
+<div>@ViewBag.LastData</div>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" id="qid" name="qid" value="@ViewBag.qid" />
+            <div class="form-group">
+
+            </div>
+            <div class="form-group">
+                <label asp-for="CostDate" class="control-label"></label>
+                <input asp-for="CostDate" class="form-control" />
+                <span asp-validation-for="CostDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CostAmount" class="control-label"></label>
+                <input asp-for="CostAmount" class="form-control" />
+                <span asp-validation-for="CostAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GenreId" class="control-label"></label>
+                @Html.DropDownList("GenreId", ViewBag.Genres as SelectList, new { @class = "form-control" })
+                <span asp-validation-for="GenreId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CostTitle" class="control-label"></label>
+                <input asp-for="CostTitle" class="form-control" />
+                <span asp-validation-for="CostTitle" class="text-danger"></span>
+            </div>
+            <hr />
+            <table id="members">
+                <tr>
+                    <th>
+                        
+                    </th>
+                    <th colspan="2">
+                        <label asp-for="Pays[0].PayAmount" class="control-label"></label>
+                    </th>
+                    <th>
+                        
+                    </th>
+                    <th>
+                        
+                    </th>
+                    <th colspan="2">
+                        <label asp-for="Repays[0].RepayAmount" class="control-label"></label>
+                    </th>
+                    </tr>
+                    @for (int i = 0; i < Model.Pays.Count; i++)
+                    {
+                    <tr>
+                        <td>
+                            <nobr>@Html.DisplayFor(modelItem => Model.Pays[i].PayUserName)</nobr>
+                            <input type="hidden" asp-for="Pays[i].PayUserId"  />
+                        </td>
+                        <td>
+                            <input type="checkbox" asp-for="Pays[i].PayUserOn" />
+                        </td>
+                        <td>
+                            <input asp-for="Pays[i].PayAmount" class="form-control" />
+                            <span asp-validation-for="Pays[i].PayAmount" class="text-danger"></span>
+                        </td>
+                        <td>
+                            →
+                        </td>
+                        <td>
+
+                            <input type="hidden" asp-for="Repays[i].RepayUserId" />
+                        </td>
+                        <td>
+                            <input type="checkbox" asp-for="Repays[i].RepayUserOn" />
+                        </td>
+                        <td>
+                            <input asp-for="Repays[i].RepayAmount" class="form-control" />
+                            <span asp-validation-for="Repays[i].RepayAmount" class="text-danger"></span>
+                        </td>
+                    </tr>
+                    }
+                </table>
+            <div class="form-group">
+                <input type="submit" value="登録" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">一覧に戻る</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,39 @@
+﻿@model WarikakeWeb.Models.MGroupDisp
+
+@{
+    ViewData["Title"] = "グループ解散";
+}
+
+<h1>解散</h1>
+
+<h3>本当にグループを解散しますか？</h3>
+<div>
+    <h4>グループ</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.groupName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.groupName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.masterName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.masterName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.startDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.startDate)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="解散" class="btn btn-danger" /> |
+        <a asp-action="Index">一覧に戻る</a>
+    </form>
+</div>

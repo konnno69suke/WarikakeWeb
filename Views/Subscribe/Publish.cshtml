@@ -1,0 +1,115 @@
+﻿@model List<WarikakeWeb.Models.SubscribeDisp>
+@{
+    ViewData["Title"] = "一括仮登録";
+}
+
+<h1>一括仮登録</h1>
+<h4>グループ：@ViewBag.GroupName</h4>
+@using (Html.BeginForm("Publish", "Subscribe", FormMethod.Post))
+{
+    String resultMessage = ViewBag.ResultMessage;
+    if (resultMessage.Length <= 0)
+    {
+        <h3>以下の定期支払を一括仮登録しますか？</h3>
+    }
+    else
+    {
+        @ViewBag.ResultMessage
+        ;
+    }
+    <tbody>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].GenreName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CostDisp)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CostTitle)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].LastSubscribedDate)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].Pays[0].PayUserName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].Pays[0].PayDisp)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].Repays[0].RepayDisp)
+                    </th>
+                </tr>
+            </thead>
+            @{
+                int cnt = Model.Count;
+                for (int i = 0; i < cnt; i++)
+                {
+                    <tr>
+                        <td>
+                            @Html.CheckBoxFor(model => model[i].isChecked)
+                            @Html.HiddenFor(model => model[i].SubscribeId)
+                            @Html.HiddenFor(model => model[i].GroupId)
+                            @Html.HiddenFor(model => model[i].GroupName)
+                            @Html.HiddenFor(model => model[i].statusName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(model => model[i].GenreName)
+                            @Html.HiddenFor(model => model[i].GenreId)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(model => model[i].CostDisp)
+                            @Html.HiddenFor(model => model[i].CostStatus)
+                            @Html.HiddenFor(model => model[i].CostAmount)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(model => model[i].CostTitle)
+                            @Html.HiddenFor(model => model[i].CostTitle)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(model => model[i].LastSubscribedDate)
+                        </td>
+                        <td>
+                            @foreach (var payItem in Model[i].Pays)
+                            {
+                                <div>
+                                    <nobr>@Html.DisplayFor(model => payItem.PayUserName)</nobr>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @foreach (var payItem in Model[i].Pays)
+                            {
+                                @Html.HiddenFor(model => payItem.PayId)
+                                <div>
+                                    @Html.DisplayFor(model => payItem.PayDisp)
+                                    @Html.HiddenFor(model => payItem.PayUserId)
+                                    @Html.HiddenFor(model => payItem.PayAmount)
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @foreach (var repayItem in Model[i].Repays)
+                            {
+                                @Html.HiddenFor(model => repayItem.RepayId)
+                                <div>
+                                    @Html.DisplayFor(model => repayItem.RepayDisp)
+                                    @Html.HiddenFor(model => repayItem.RepayUserId)
+                                    @Html.HiddenFor(model => repayItem.RepayAmount)
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </table>
+    </tbody>
+    <input type="submit" value="一括仮登録" class="btn btn-primary" />
+    <a asp-action="Index">一覧に戻る</a>
+}

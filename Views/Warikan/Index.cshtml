@@ -1,0 +1,151 @@
+﻿@model WarikakeWeb.Models.WarikakeIndex
+@{
+    ViewData["Title"] = "未精算一覧";
+}
+
+<h1>未精算一覧</h1>
+<h4>グループ：@ViewBag.GroupName</h4>
+
+@{
+    if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("GroupId") != null)
+    {
+    <p>
+        <a asp-action="Create">新規登録</a>
+         | 
+        <a asp-action="ManualSettlement">手動精算</a>
+    </p>
+    }
+}
+@if (ViewBag.WarikakeProcResult != null && ViewBag.WarikakeProcResult.Length > 0)
+{
+    <div>
+        @ViewBag.WarikakeProcResult
+    </div>
+    <hr />
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].CostDate)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].GenreName)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].CostDisp)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].CostTitle)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayUserName)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayDisp)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Repays[0].RepayDisp)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="font-weight: bold;">
+            </td>
+            <td style="font-weight: bold;">
+                @Html.DisplayFor(model => model.warikakeSum.GenreName)
+            </td>
+            <td style="font-weight: bold;">
+                @Html.DisplayFor(model => model.warikakeSum.CostDisp)
+            </td>
+            <td style="font-weight: bold;">
+            </td>
+            <td style="font-weight: bold;">
+                @foreach (var payItem in Model.warikakeSum.Pays)
+                {
+                    <div>
+                        @Html.DisplayFor(model => payItem.PayUserName)
+                    </div>
+                }
+            </td>
+            <td style="font-weight: bold;">
+                @foreach (var payItem in Model.warikakeSum.Pays)
+                {
+                    <div>
+                        @Html.DisplayFor(model => payItem.PayDisp)
+                    </div>
+                }
+            </td>
+            <td style="font-weight: bold;">
+                @foreach (var repayItem in Model.warikakeSum.Repays)
+                {
+                    <div>
+                        @Html.DisplayFor(model => repayItem.RepayDisp)
+                    </div>
+                }
+            </td>
+            <td style="font-weight: bold;">
+                <a asp-action="SettlementAll" asp-route-id="model.warikakeSum.CostId">一括精算</a>
+            </td>
+        </tr>
+        @foreach (var item in Model.warikakeDisps)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.CostDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.GenreName)
+                    @if(item.status == 0)
+                    {
+                        <a asp-action="Registrate" asp-route-id="@item.CostId">(仮)</a>
+                    }
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.CostDisp)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.CostTitle)
+                </td>
+                <td>
+                    @foreach (var payItem in item.Pays)
+                    {
+                        <div>
+                            <nobr>@Html.DisplayFor(model => payItem.PayUserName)</nobr>
+                        </div>
+                    }
+                </td>
+                <td>
+                    @foreach (var payItem in item.Pays)
+                    {
+                        <div>
+                            @Html.DisplayFor(model => payItem.PayDisp)
+                        </div>
+                    }
+                </td>
+                <td>
+                    @foreach (var repayItem in item.Repays)
+                    {
+                        <div>
+                            @Html.DisplayFor(model => repayItem.RepayDisp)
+                        </div>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.CostId">修正</a> |
+                    @if(item.status == 1)
+                    {
+                        <a asp-action="Settlement" asp-route-id="@item.CostId">精算</a>
+                    }
+                    else
+                    {
+                        <a>精算</a>
+                    }
+                     | <a asp-action="Delete" asp-route-id="@item.CostId">削除</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

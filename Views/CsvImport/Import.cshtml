@@ -1,0 +1,39 @@
+﻿@model WarikakeWeb.Models.CsvImport
+
+@{
+    ViewData["Title"] = "CSVインポート";
+}
+
+<h1>CSVインポート</h1>
+
+<h4>移行データをインポート</h4>
+@ViewBag.impCnt
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Import" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="formFile" class="control-label"></label>
+                <input type="file" asp-for="@Model.formFile" class="form-control" />
+                <span asp-validation-for="formFile" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="インポート" class="btn btn-primary" />
+            </div>
+            <div>
+                <a asp-area="" asp-controller="CsvImport" asp-action="Migrate">移行</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-area="" asp-controller="Home" asp-action="Index">メニューに戻る</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

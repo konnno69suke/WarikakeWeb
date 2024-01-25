@@ -1,0 +1,27 @@
+﻿@model WarikakeWeb.Models.MGenreDisp
+
+@{
+    ViewData["Title"] = "Delete of Genre";
+}
+
+<h1>削除</h1>
+
+<h3>本当にこの種別を削除しますか？</h3>
+<div>
+    <h4>種別</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.GenreName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.GenreName)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="削除" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>

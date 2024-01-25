@@ -1,0 +1,121 @@
+﻿@model WarikakeWeb.Models.WarikakeDisp
+
+@{
+    ViewData["Title"] = "手動精算";
+}
+<script>
+    $(document).ready(function () {
+        resttext();
+        $('input[type="checkbox"]').change(resttext);
+        $('#CostAmount').change(calccost);
+    });
+</script>
+
+<h1>手動精算</h1>
+
+<h4>割勘家計簿</h4>
+<hr />
+@if (ViewBag.WariProcResult != null && ViewBag.WariProcResult.Length > 0)
+{
+    <div>
+        @ViewBag.WariProcResult
+    </div>
+    <hr />
+}
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" id="qid" name="qid" value="@ViewBag.qid" />
+            <div class="form-group">
+                <input type="hidden" asp-for="GroupId" />
+                <span asp-validation-for="GroupId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="CostDate">精算日</label>
+                <input asp-for="CostDate" class="form-control" />
+                <span asp-validation-for="CostDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="CostAmount">精算額</label>
+                <input asp-for="CostAmount" class="form-control" />
+                <span asp-validation-for="CostAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="GenreId">種別</label>
+                <select class="form-control" data-val="true" data-val-required="The GenreId field is required." id="GenreId" name="GenreId">
+                    <option value="0">手動精算</option>
+                </select>
+                <span asp-validation-for="GenreId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CostTitle" class="control-label"></label>
+                <input asp-for="CostTitle" class="form-control" />
+                <span asp-validation-for="CostTitle" class="text-danger"></span>
+            </div>
+            <hr />
+            <table id="members">
+                <tr>
+                    <th>
+
+                    </th>
+                    <th colspan="2">
+                        <label class="control-label" for="Pays_0__PayAmount">支払者</label>
+                    </th>
+                    <th>
+
+                    </th>
+                    <th>
+
+                    </th>
+                    <th colspan="2">
+                        <label class="control-label" for="Repays_0__RepayAmount">受取者</label>
+                    </th>
+                </tr>
+                @for (int i = 0; i < Model.Pays.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <nobr>@Html.DisplayFor(modelItem => Model.Pays[i].PayUserName)</nobr>
+                            <input type="hidden" asp-for="Pays[i].PayUserId" />
+                        </td>
+                        <td>
+                            <input type="checkbox" asp-for="Pays[i].PayUserOn" />
+                        </td>
+                        <td>
+                            <input asp-for="Pays[i].PayAmount" class="form-control" />
+                            <span asp-validation-for="Pays[i].PayAmount" class="text-danger"></span>
+                        </td>
+                        <td>
+                            →
+                        </td>
+                        <td>
+
+                            <input type="hidden" asp-for="Repays[i].RepayUserId" />
+                        </td>
+                        <td>
+                            <input type="checkbox" asp-for="Repays[i].RepayUserOn" />
+                        </td>
+                        <td>
+                            <input asp-for="Repays[i].RepayAmount" class="form-control" />
+                            <span asp-validation-for="Repays[i].RepayAmount" class="text-danger"></span>
+                        </td>
+                    </tr>
+                }
+            </table>
+            <div class="form-group">
+                <input type="submit" value="手動精算" formaction="/Warikan/ManualSettlement" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">一覧に戻る</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
