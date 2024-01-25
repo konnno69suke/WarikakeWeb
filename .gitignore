@@ -361,3 +361,29 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# memo
+memo/
+uploads/
+Migrations_bk
+
+# setting
+appsettings_*.json
+/appsettings_devbk20240115.json
+/appsettings_localbk20240115.json
+/appsettings_prodbk20240123.json
+/uploads/record20231217014958_edit1.csv_20240112021434
+/uploads/testtext.csv_20240112021827
+/uploads/testtext.csv_20240112022914
+/uploads/testtext.csv_20240112024745
+/uploads/testtext.csv_20240112024920
+/uploads/testtext.csv_20240112024929
+/uploads/testtext.csv_20240112025101
+/uploads/testtext.csv_20240112032223
+/uploads/testtext.csv_20240113033137
+/memo/record20231217014958_edit1.csv
+/memo/script.sql
+/memo/testtext.csv
+/memo/web.config_dev20240115
+/memo/環境構築メモ.txt
+/memo/開発進捗メモ.txt
