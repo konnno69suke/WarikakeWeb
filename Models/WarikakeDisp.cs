@@ -167,6 +167,65 @@ namespace WarikakeWeb.Models
             return warikakeQueries;
         }
 
+        // 月別集計表
+        public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year)
+        {
+            FormattableString queryString = $@"with main as
+                    (select year(tc.costdate) cyear, month(tc.costdate) cmonth, tc.costamount costamount, 
+                          tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
+                          tr.repayid, tr.userid RepayUserId, tr.RepayAmount repayamount
+                    from  tcost tc 
+                    inner join tpay tp on tc.costid = tp.costid 
+                    inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
+                    where tc.GroupId = {GroupId} 
+                    ), agg as
+                    (select mt.cyear, mt.cmonth, sum(mt.costamount) costamount, 
+                          max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
+                          max(mt.repayid) repayid, mt.repayuserid, sum(mt.repayamount) repayamount
+                    from main mt
+                    where mt.cyear = {year}
+                    group by mt.cyear, mt.cmonth, mt.payuserid, mt.repayuserid)
+                    select ag.cmonth costid, ' ' costtitle, {GroupId} groupid, ' ' groupname, 0 GenreId, convert(varchar, ag.cmonth) + N'月合計' GenreName, 7 status, ' ' statusname, 0 coststatus, ag.costamount, sysdatetime() costdate,
+                         ag.payid, ag.payuserid, pu.username payusername, ag.payamount,
+                         ag.repayid, ag.repayuserid, ru.username repayusername, ag.repayamount
+                    from agg ag
+                    inner join muser pu on ag.payuserid = pu.userid
+                    inner join muser ru on ag.repayuserid = ru.userid
+                    order by ag.cmonth, ag.payuserid";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
+
+
+        // 年間集計
+        public List<WarikakeQuery> GetAggregatedSumWarikakeQueries(int GroupId, int year)
+        {
+
+            FormattableString queryString = $@"with main as
+                    (select year(tc.costdate) cyear, month(tc.costdate) cmonth, tc.costamount costamount, 
+                          tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
+                          tr.repayid, tr.userid RepayUserId, tr.RepayAmount repayamount
+                    from  tcost tc 
+                    inner join tpay tp on tc.costid = tp.costid 
+                    inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
+                    where tc.GroupId = {GroupId}
+                    ), agg as
+                    (select max(mt.cyear) cyear, max(mt.cmonth) cmonth, sum(mt.costamount) costamount, 
+                          max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
+                          max(mt.repayid) repayid, mt.repayuserid, sum(mt.repayamount) repayamount
+                    from main mt
+                    where mt.cyear = {year}
+                    group by mt.payuserid, mt.repayuserid)
+                    select ag.cmonth costid, ' ' costtitle, {GroupId} groupid, ' ' groupname, -1 genreid, convert(varchar, ag.cyear) + N'年計' genrename, 7 status, ' ' statusname, 0 coststatus, ag.costamount, sysdatetime() costdate,
+                         ag.payid, ag.payuserid, pu.username payusername, ag.payamount,
+                         ag.repayid, ag.repayuserid, ru.username repayusername, ag.repayamount
+                    from agg ag
+                    inner join muser pu on ag.payuserid = pu.userid
+                    inner join muser ru on ag.repayuserid = ru.userid
+                    order by ag.cmonth, ag.payuserid";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
 
         public void CreateLogic(WarikakeDisp input, int GroupId, int UserId)
         {
@@ -370,23 +429,16 @@ namespace WarikakeWeb.Models
         }
     }
     // 画面表示用モデル　検索条件を持つ
-    public class WarikakeSearch
+    public class WarikakeSearch : WarikakeIndex
     {
         // ステータス
         // 年月
         // 種別
+        public int GenreId;
         // 人
+        public int prevYear;
+        public int nextYear;
 
-
-        public List<WarikakeDisp> warikakeDisps { get; set; }
-
-        public WarikakeDisp warikakeSum { get; set; }
-
-        public WarikakeSearch()
-        {
-            warikakeDisps = new List<WarikakeDisp>();
-            warikakeSum = new WarikakeDisp();
-        }
     }
 
 
