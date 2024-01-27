@@ -1,60 +1,40 @@
 ﻿@using Newtonsoft.Json
 @model WarikakeWeb.Models.WarikakeSearch
 @{
-    ViewData["Title"] = "集計一覧";
+    ViewData["Title"] = "集計詳細";
 }
 
-<h1>集計一覧</h1>
+<h1>集計詳細</h1>
 <h4>グループ：@ViewBag.GroupName</h4>
-<form asp-action="Index">
-<p>
-        @if (Model.prevYear == 0)
-        {
-            <a>前年</a>
-        }
-        else
-        {
-            <a asp-action="Index" asp-route-year="@Model.prevYear">前年</a>
-        }
-    |
-        <span>@Model.currDisp</span>
-    |
-        @if(Model.nextYear == 0)
-        {
-            <a>翌年</a>
-        }
-        else
-        {
-            <a asp-action="Index" asp-route-year="@Model.nextYear">翌年</a>
-        }
-</p>
-    <div>
-        <canvas id="genreCostMonthGraph"></canvas>
-    </div>
-    <script>
-        const ctx = document.getElementById('genreCostMonthGraph');
+<form asp-action="Detail">
+    <p>
 
-        new Chart(ctx, @Html.Raw(Model.warikakeChart));
-    </script>
+        <a asp-action="Date" asp-route-date="@Model.prevDate">前日</a>
+        |
+        <span>@Model.currDisp</span>
+        |
+        <a asp-action="Date" asp-route-date="@Model.nextDate">翌日</a>
+    </p>
 </form>
 <table class="table">
     <thead>
         <tr>
             <th>
-                    @Html.DisplayNameFor(model => model.warikakeDisps[0].GenreName)
+                @Html.DisplayNameFor(model => model.warikakeDisps[0].GenreName)
             </th>
             <th>
-                    @Html.DisplayNameFor(model => model.warikakeDisps[0].CostDisp)
+                @Html.DisplayNameFor(model => model.warikakeDisps[0].CostDisp)
             </th>
             <th>
-                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayUserName)
+                @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayUserName)
             </th>
             <th>
-                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayDisp)
+                @Html.DisplayNameFor(model => model.warikakeDisps[0].Pays[0].PayDisp)
             </th>
             <th>
-                    @Html.DisplayNameFor(model => model.warikakeDisps[0].Repays[0].RepayDisp)
+                @Html.DisplayNameFor(model => model.warikakeDisps[0].Repays[0].RepayDisp)
             </th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -90,7 +70,6 @@
                 }
             </td>
             <td style="font-weight: bold;">
-
             </td>
         </tr>
         @foreach (var item in Model.warikakeDisps)
@@ -127,9 +106,10 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="Detail" asp-route-yearMonth="@item.CostTitle">詳細</a>
+                    
                 </td>
             </tr>
         }
+        <a asp-action="Detail" asp-route-yearMonth="@Model.currMonth">一覧に戻る</a>
     </tbody>
 </table>
