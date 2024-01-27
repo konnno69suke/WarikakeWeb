@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Text.Json;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
@@ -25,68 +27,142 @@ namespace WarikakeWeb.Controllers
                 return RedirectToAction("Login", "Home");
             }
 
-            // 種別プルダウンのセット
-            MGenre mGenre = new MGenre(_context);
-            ViewBag.Genres = mGenre.GetSelectList((int)GroupId);
-
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
             // DB検索
             WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
 
-
-            int currYear = DateTime.Now.Year;
             if (year <= 0)
             {
                 year = DateTime.Now.Year;
             }
-            warikakeSearch.prevYear = (2000>year) ? 0 : year-1;
+            warikakeSearch.prevYear = (2010>year) ? 0 : year-1;
+            warikakeSearch.currYear = year;
+            warikakeSearch.currDisp = year + "年";
             warikakeSearch.nextYear = (DateTime.Now.Year<=year) ? 0 : year+1;
             List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year);
             List<WarikakeQuery> warikakeSumQueries = warikakeQuery.GetAggregatedSumWarikakeQueries((int)GroupId, year);
+
+            List<WarikakeQuery> warikakeGraphQueries = warikakeQuery.GetAggreateGraphWarikakeQueries((int)GroupId, year);
+
             // 画面表示向けに編集
             WarikakeDisp warikakeDisp = new WarikakeDisp();
             warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
             warikakeSearch.warikakeSum = warikakeDisp.GetWarikakeDisp(warikakeSumQueries);
 
+            List<WarikakeGraph> warikakeGraphs = warikakeDisp.GetWarikakeGraph(warikakeGraphQueries);
+            WarikakeChart chart = new WarikakeChart();
+            chart.data.labels = new List<String>();
+            for (int i = 1; i <= 12; i++)
+            {
+                chart.data.labels.Add("'" + i + "月'");
+            }
+            chart.data.datasets = warikakeDisp.GetChartDataset(warikakeGraphQueries);
 
+            String tmpString = JsonConvert.SerializeObject(chart);
+            warikakeSearch.warikakeChart = tmpString.Replace("\"", "");
             return View(warikakeSearch);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Index(WarikakeSearch input)
+        public ActionResult Detail(string yearMonth)
         {
-            // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
-            int? UserId = HttpContext.Session.GetInt32("UserId");
+            ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
 
-            // 種別プルダウンのセット
-            MGenre mGenre = new MGenre(_context);
-            ViewBag.Genres = mGenre.GetSelectList((int)GroupId, input.GenreId);
+            // 戻り値の準備
+            WarikakeSearch warikakeSearch = new WarikakeSearch();
+            // DB検索
+            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
 
-            // 一般入力チェック
-            if (!ModelState.IsValid)
+            int year = 0;
+            int month = 0;
+            try
             {
-                return View(input);
+                year = int.Parse(yearMonth.Split('_')[0]);
+                month = int.Parse(yearMonth.Split('_')[1]);
+            }catch(Exception) 
+            {
+                year = DateTime.Now.Year;
+                month = DateTime.Now.Month;
+            }
+            DateTime currYearMonth = new DateTime(year, month, 1);
+
+            warikakeSearch.currYear = year;
+            warikakeSearch.prevMonth = currYearMonth.AddMonths(-1).ToString("yyyy_MM");
+            warikakeSearch.currMonth = currYearMonth.ToString("yyyy_MM");
+            warikakeSearch.currDisp = currYearMonth.ToString("yyyy年MM月");
+            warikakeSearch.nextMonth = currYearMonth.AddMonths(1).ToString("yyyy_MM");
+
+            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month);
+
+            List<WarikakeQuery> warikakeGraphQueries = warikakeQuery.GetAggreateGraphWarikakeQueries((int)GroupId, year, month);
+
+            // 画面表示向けに編集
+            WarikakeDisp warikakeDisp = new WarikakeDisp();
+            warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
+
+            WarikakeChart chart = new WarikakeChart();
+            chart.data.labels = new List<String>();
+            int lastDay = new DateTime(year, month, 1).AddMonths(1).AddDays(-1).Day;
+            for (int i=1; i<= lastDay; i++)
+            {
+                chart.data.labels.Add("'" + i +  "日'");
+            }
+            chart.data.datasets = warikakeDisp.GetChartDataset(warikakeGraphQueries);
+
+            String tmpString = JsonConvert.SerializeObject(chart);
+            warikakeSearch.warikakeChart = tmpString.Replace("\"", "");
+            return View(warikakeSearch);
+        }
+
+        public ActionResult Date(string date)
+        {
+            int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
+            if (GroupId == null)
+            {
+                // セッション切れ
+                return RedirectToAction("Login", "Home");
             }
 
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
             // DB検索
             WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, -1);
-            List<WarikakeQuery> warikakeSumQueries = warikakeQuery.GetAggregatedSumWarikakeQueries((int)GroupId, -1);
+
+            int year = 0;
+            int month = 0;
+            int day = 0;
+            try
+            {
+                year = int.Parse(date.Split('_')[0]);
+                month = int.Parse(date.Split('_')[1]);
+                day = int.Parse(date.Split('_')[2]);
+            }
+            catch (Exception)
+            {
+                year = DateTime.Now.Year;
+                month = DateTime.Now.Month;
+                day = DateTime.Now.Day;
+            }
+            DateTime currDate = new DateTime(year, month, day);
+
+            warikakeSearch.currMonth = currDate.ToString("yyyy_MM");
+            warikakeSearch.prevDate = currDate.AddDays(-1).ToString("yyyy_MM_dd");
+            warikakeSearch.currDate = currDate.ToString("yyyy_MM_dd");
+            warikakeSearch.currDisp = currDate.ToString("yyyy年MM月dd日");
+            warikakeSearch.nextDate = currDate.AddDays(1).ToString("yyyy_MM_dd");
+
+            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month, day);
+
             // 画面表示向けに編集
             WarikakeDisp warikakeDisp = new WarikakeDisp();
             warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
-            warikakeSearch.warikakeSum = warikakeDisp.GetWarikakeDisp(warikakeSumQueries);
-
 
             return View(warikakeSearch);
         }

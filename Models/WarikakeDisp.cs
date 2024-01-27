@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using WarikakeWeb.Data;
 using WarikakeWeb.Logic;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -185,7 +188,7 @@ namespace WarikakeWeb.Models
                     from main mt
                     where mt.cyear = {year}
                     group by mt.cyear, mt.cmonth, mt.payuserid, mt.repayuserid)
-                    select ag.cmonth costid, ' ' costtitle, {GroupId} groupid, ' ' groupname, 0 GenreId, convert(varchar, ag.cmonth) + N'月合計' GenreName, 7 status, ' ' statusname, 0 coststatus, ag.costamount, sysdatetime() costdate,
+                    select ag.cmonth costid, convert(varchar, ag.cyear) + '_' + convert(varchar, ag.cmonth) costtitle, {GroupId} groupid, ' ' groupname, 0 GenreId, convert(varchar, ag.cmonth) + N'月合計' GenreName, 7 status, ' ' statusname, 0 coststatus, ag.costamount, sysdatetime() costdate,
                          ag.payid, ag.payuserid, pu.username payusername, ag.payamount,
                          ag.repayid, ag.repayuserid, ru.username repayusername, ag.repayamount
                     from agg ag
@@ -223,6 +226,88 @@ namespace WarikakeWeb.Models
                     inner join muser pu on ag.payuserid = pu.userid
                     inner join muser ru on ag.repayuserid = ru.userid
                     order by ag.cmonth, ag.payuserid";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
+        // グラフ用の種別年間推移
+        public List<WarikakeQuery> GetAggreateGraphWarikakeQueries(int GroupId, int year)
+        {
+            FormattableString queryString = $@"with main as 
+                    (select tc.genreid, tc.genrename, tc.costamount, year(tc.costdate) cyear, month(tc.costdate) cmonth 
+                    from tcost tc
+                    where tc.groupid = {GroupId})
+                    select 
+                    ma.cmonth costid, ' ' costtitle, 0 groupid, ' ' groupname, ma.genreid, ma.genrename, 7 status, 0 coststatus, sum(ma.costamount) costamount, sysdatetime() costdate, 
+                    0 payid, 0 payuserid, ' ' payusername, 0 payamount, 0 repayid, 0 repayuserid, ' ' repayusername, 0 repayamount
+                    from main ma
+                    where ma.cyear = {year}
+                    group by ma.genreid, ma.genrename, ma.cmonth
+                    order by ma.genreid, ma.cmonth";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
+
+        // 日別集計表
+        public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year, int month)
+        {
+            FormattableString queryString = $@"with main as
+                    (select year(tc.costdate) cyear, month(tc.costdate) cmonth, day(tc.costdate) cday, tc.costamount costamount, 
+                          tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
+                          tr.repayid, tr.userid RepayUserId, tr.RepayAmount repayamount
+                    from  tcost tc 
+                    inner join tpay tp on tc.costid = tp.costid 
+                    inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
+                    where tc.GroupId = {GroupId}
+                    ), agg as
+                    (select mt.cyear, mt.cmonth, mt.cday, sum(mt.costamount) costamount, 
+                          max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
+                          max(mt.repayid) repayid, mt.repayuserid, sum(mt.repayamount) repayamount
+                    from main mt
+                    where mt.cyear = {year} and mt.cmonth = {month}
+                    group by mt.cyear, mt.cmonth, mt.cday, mt.payuserid, mt.repayuserid)
+                    select ag.cday costid, convert(varchar, ag.cyear) + '_' + convert(varchar, ag.cmonth) + '_' + convert(varchar, ag.cday) costtitle, {GroupId} groupid, ' ' groupname, 0 GenreId, convert(varchar, ag.cmonth) + N'月' + convert(varchar, ag.cday) + N'日' GenreName, 7 status, ' ' statusname, 0 coststatus, ag.costamount, sysdatetime() costdate,
+                         ag.payid, ag.payuserid, pu.username payusername, ag.payamount,
+                         ag.repayid, ag.repayuserid, ru.username repayusername, ag.repayamount
+                    from agg ag
+                    inner join muser pu on ag.payuserid = pu.userid
+                    inner join muser ru on ag.repayuserid = ru.userid
+                    order by ag.cday, ag.payuserid";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
+
+        // グラフ用の種別年間推移
+        public List<WarikakeQuery> GetAggreateGraphWarikakeQueries(int GroupId, int year, int month)
+        {
+            FormattableString queryString = $@"with main as 
+                    (select tc.genreid, tc.genrename, tc.costamount, year(tc.costdate) cyear, month(tc.costdate) cmonth, day(tc.costdate) cday 
+                    from tcost tc
+                    where tc.groupid = {GroupId})
+                    select 
+                    ma.cday costid, ' ' costtitle, 0 groupid, ' ' groupname, ma.genreid, ma.genrename, 7 status, 0 coststatus, sum(ma.costamount) costamount, sysdatetime() costdate, 
+                    0 payid, 0 payuserid, ' ' payusername, 0 payamount, 0 repayid, 0 repayuserid, ' ' repayusername, 0 repayamount
+                    from main ma
+                    where ma.cyear = {year} and ma.cmonth = {month}
+                    group by ma.genreid, ma.genrename, ma.cmonth, cday
+                    order by ma.genreid, ma.cday";
+            List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
+            return warikakeQueries;
+        }
+
+        // 指定日の支払情報
+        public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year, int month, int day)
+        {
+            DateTime dateTime = new DateTime(year, month, day);
+            FormattableString queryString = $@"select tc.costid, format(tc.costdate, 'yyyy年MM月dd日') costtitle, tc.groupid, ' ' groupname, tc.genreid, tc.genrename, 7 status, ' ' statusname, coststatus, tc.costamount, tc.costdate,
+                    tp.payid, tp.userid PayUserId, pu.username payusername, tp.PayAmount payamount, 
+                    tr.repayid, tr.userid RepayUserId, ru.username repayusername, tr.RepayAmount repayamount
+                    from  tcost tc 
+                    inner join tpay tp on tc.costid = tp.costid 
+                    inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
+                    inner join muser pu on tp.userid = pu.userid
+                    inner join muser ru on tr.userid = ru.userid
+                    where tc.GroupId = {GroupId} and tc.costdate = {dateTime}
+                    order by tc.costid";
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
             return warikakeQueries;
         }
@@ -434,11 +519,24 @@ namespace WarikakeWeb.Models
         // ステータス
         // 年月
         // 種別
-        public int GenreId;
+        public int GenreId { get; set; }
         // 人
-        public int prevYear;
-        public int nextYear;
 
+        public string currDisp {  get; set; }
+        public int prevYear { get; set; }
+        public int currYear { get; set; }
+        public int nextYear { get; set; }
+
+        public string prevMonth { get; set; }
+        public string currMonth { get; set; }
+        public string nextMonth { get; set; }
+
+        public string prevDate { get; set; }
+        public string currDate { get; set; }
+        public string nextDate { get; set; }
+
+
+        public string warikakeChart { get; set; }
     }
 
 
@@ -606,7 +704,109 @@ namespace WarikakeWeb.Models
             return input;
         }
 
+        // 折れ線グラフ用に編集
+        public List<ChartDataset> GetChartDataset(List<WarikakeQuery> warikakeQueries)
+        {
+            List<ChartDataset> chartDatasets = new List<ChartDataset>();
 
+            int prevGenreId = -1;
+            int day = -1;
+            ChartDataset chartDataset = new ChartDataset();
+            foreach(WarikakeQuery warikakeQuery in warikakeQueries)
+            {
+                if(prevGenreId != warikakeQuery.GenreId)
+                {
+                    if (prevGenreId != -1)
+                    {
+                        chartDatasets.Add(chartDataset);
+                        chartDataset = new ChartDataset();
+                    }
+                    prevGenreId = warikakeQuery.GenreId;
+                    day = 1;
+
+                    chartDataset.label = "'" + warikakeQuery.GenreName + "'";
+                    chartDataset.borderWidth = 1;
+                }
+                while (day <= warikakeQuery.CostId) {
+                    if (day == warikakeQuery.CostId)
+                    {
+                        chartDataset.data.Add(warikakeQuery.CostAmount);
+                    }
+                    else
+                    {
+                        chartDataset.data.Add(0);
+                    }
+                    day++;
+                }
+            }
+            return chartDatasets;
+        }
+
+
+        public List<WarikakeGraph> GetWarikakeGraph(List<WarikakeQuery> warikakeQueries)
+        {
+            List<WarikakeGraph> warikakeGraphs = new List<WarikakeGraph>();
+
+            int prevGenreId = -1;
+            WarikakeGraph warikakeGraph = new WarikakeGraph();
+            foreach (WarikakeQuery warikakeQuery in warikakeQueries)
+            {
+                if(prevGenreId != warikakeQuery.GenreId)
+                {
+                    if (prevGenreId != -1) 
+                    {
+                        warikakeGraphs.Add(warikakeGraph);
+                        warikakeGraph = new WarikakeGraph();
+                    }
+                    prevGenreId = warikakeQuery.GenreId;
+
+                    warikakeGraph.GenreId = warikakeQuery.GenreId;
+                    warikakeGraph.GenreName = warikakeQuery.GenreName;
+                }
+                switch (warikakeQuery.CostId)
+                {
+                    case 1:
+                        warikakeGraph.Amount1 = warikakeQuery.CostAmount;
+                        break;
+                    case 2:
+                        warikakeGraph.Amount2 = warikakeQuery.CostAmount;
+                        break;
+                    case 3:
+                        warikakeGraph.Amount3 = warikakeQuery.CostAmount;
+                        break;
+                    case 4:
+                        warikakeGraph.Amount4 = warikakeQuery.CostAmount;
+                        break;
+                    case 5:
+                        warikakeGraph.Amount5 = warikakeQuery.CostAmount;
+                        break;
+                    case 6:
+                        warikakeGraph.Amount6 = warikakeQuery.CostAmount;
+                        break;
+                    case 7:
+                        warikakeGraph.Amount7 = warikakeQuery.CostAmount;
+                        break;
+                    case 8:
+                        warikakeGraph.Amount8 = warikakeQuery.CostAmount;
+                        break;
+                    case 9:
+                        warikakeGraph.Amount9 = warikakeQuery.CostAmount;
+                        break;
+                    case 10:
+                        warikakeGraph.Amount10 = warikakeQuery.CostAmount;
+                        break;
+                    case 11:
+                        warikakeGraph.Amount11 = warikakeQuery.CostAmount;
+                        break;
+                    case 12:
+                        warikakeGraph.Amount12 = warikakeQuery.CostAmount;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return warikakeGraphs;
+        }
 
     }
 
@@ -723,4 +923,65 @@ namespace WarikakeWeb.Models
         public int processAmount { get; set; }
     }
 
+    public class WarikakeGraph
+    {
+        public int GenreId { get; set; }
+        public String GenreName { get; set; }
+        public int Amount1 { get; set; }
+        public int Amount2 { get; set; }
+        public int Amount3 { get; set; }
+        public int Amount4 { get; set; }
+        public int Amount5 { get; set; }
+        public int Amount6 { get; set; }
+        public int Amount7 { get; set; }
+        public int Amount8 { get; set; }
+        public int Amount9 { get; set; }
+        public int Amount10 { get; set; }
+        public int Amount11 { get; set; }
+        public int Amount12 { get; set; }
+    }
+
+    public class WarikakeChart
+    {
+        public string type { get; set; }
+        public ChartData data { get; set; }
+
+        public ChartOption options { get; set; }
+
+        public WarikakeChart()
+        {
+            type = "'line'";
+            data = new ChartData();
+            data.labels = new List<string>();
+            data.datasets = new List<ChartDataset>();
+            options = new ChartOption();
+            options.scales = new ChartScale();
+            options.scales.y = new ChartY();
+            options.scales.y.beginAtZero = true;
+        }
+    }
+
+    public class ChartData
+    {
+        public List<String> labels {get; set;}
+        public List<ChartDataset> datasets { get; set;}
+    }
+    public class ChartOption
+    {
+        public ChartScale scales { get; set; }
+    }
+    public class ChartDataset
+    {
+        public String label { get; set; }
+        public List<int> data { get; set; } = new List<int>();
+        public int borderWidth { get; set; }
+    }
+    public class ChartScale
+    {
+        public ChartY y { get; set; }
+    }
+    public class ChartY
+    {
+        public Boolean beginAtZero { get; set; }
+    } 
 }
