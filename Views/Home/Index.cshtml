@@ -22,6 +22,10 @@
                 <div class="container">
                     <p>
                         <a asp-area="" asp-controller="Warikan" asp-action="Index">未精算一覧</a>
+                         |
+                        <a asp-area="" asp-controller="Provision" asp-action="Index">仮登録一覧</a>
+                         | 
+                        <a asp-area="" asp-controller="Aggregate" asp-action="Index">過去の集計</a>
                     </p>
                 </div>
                 if (Model.GroupUserId == Model.UserId){
@@ -29,10 +33,20 @@
                         マスタメンテナンス
                         <p>
                             <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
+                             | 
                             <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
-                            <a asp-area="" asp-controller="MGroups" asp-action="Index">グループ</a>
+                             | 
                             <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
+                        </p>
+                    </div>
+                    <div class="container">
+                         グループリーダー機能
+                        <p>
+                            <a asp-area="" asp-controller="MGroups" asp-action="Index">グループ</a>
+                             | 
                             <a asp-area="" asp-controller="CsvImport" asp-action="Import">CSVインポート</a>
+                             |
+                            <a asp-area="" asp-controller="CsvExport" asp-action="Export">CSVエクスポート</a>
                         </p>
                     </div>
                 }
@@ -42,7 +56,9 @@
                         マスタメンテナンス
                         <p>
                             <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
+                             | 
                             <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
+                             | 
                             <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
                         </p>
                     </div>

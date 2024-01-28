@@ -1,0 +1,27 @@
+﻿@model WarikakeWeb.Models.CsvExport
+
+@{
+    ViewData["Title"] = "CSVエクスポート";
+}
+
+<h1>CSVエクスポート</h1>
+
+<h4>支払データをエクスポート</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Export">
+            <label asp-for="hasDoubleQuote" class="control-label"></label>
+                付ける<input type="radio" asp-for="hasDoubleQuote" value="has" id="has_quote" />
+                付けない<input type="radio" asp-for="hasDoubleQuote" value="no" id="no_quote" /><br />
+            <span asp-validation-for="hasDoubleQuote" class="text-danger"></span>
+            <div class="form-group">
+                <input type="submit" value="エクスポート" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-area="" asp-controller="Home" asp-action="Index">メニューに戻る</a>
+</div>
