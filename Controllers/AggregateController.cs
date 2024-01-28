@@ -93,10 +93,27 @@ namespace WarikakeWeb.Controllers
             DateTime currYearMonth = new DateTime(year, month, 1);
 
             warikakeSearch.currYear = year;
-            warikakeSearch.prevMonth = currYearMonth.AddMonths(-1).ToString("yyyy_MM");
+            DateTime prevMonth = currYearMonth.AddMonths(-1);
+            if(prevMonth < new DateTime(2010, 1, 1))
+            {
+                warikakeSearch.prevMonth = "0";
+            }
+            else
+            {
+                warikakeSearch.prevMonth = currYearMonth.AddMonths(-1).ToString("yyyy_MM");
+            }
+            
             warikakeSearch.currMonth = currYearMonth.ToString("yyyy_MM");
             warikakeSearch.currDisp = currYearMonth.ToString("yyyy年MM月");
-            warikakeSearch.nextMonth = currYearMonth.AddMonths(1).ToString("yyyy_MM");
+            DateTime nextMonth = currYearMonth.AddMonths(1);
+            if(nextMonth > DateTime.Now)
+            {
+                warikakeSearch.nextMonth = "0";
+            }
+            else
+            {
+                warikakeSearch.nextMonth = currYearMonth.AddMonths(1).ToString("yyyy_MM");
+            }
 
             List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month);
 
@@ -153,11 +170,26 @@ namespace WarikakeWeb.Controllers
             DateTime currDate = new DateTime(year, month, day);
 
             warikakeSearch.currMonth = currDate.ToString("yyyy_MM");
-            warikakeSearch.prevDate = currDate.AddDays(-1).ToString("yyyy_MM_dd");
+            DateTime prevDate = currDate.AddDays(-1);
+            if(prevDate < new DateTime(2010, 1, 1))
+            {
+                warikakeSearch.prevDate = "0";
+            }
+            else
+            {
+                warikakeSearch.prevDate = currDate.AddDays(-1).ToString("yyyy_MM_dd");
+            }
             warikakeSearch.currDate = currDate.ToString("yyyy_MM_dd");
             warikakeSearch.currDisp = currDate.ToString("yyyy年MM月dd日");
-            warikakeSearch.nextDate = currDate.AddDays(1).ToString("yyyy_MM_dd");
-
+            DateTime nextDate = currDate.AddDays(1);
+            if(nextDate > DateTime.Now)
+            {
+                warikakeSearch.nextDate = "0";
+            }
+            else 
+            {
+                warikakeSearch.nextDate = currDate.AddDays(1).ToString("yyyy_MM_dd");
+            }
             List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month, day);
 
             // 画面表示向けに編集

@@ -23,15 +23,20 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Warikan" asp-action="Index">未精算一覧</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Provision" asp-action="Index">仮登録一覧</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Aggregate" asp-action="Index">過去の集計</a>
-                        </li>
+                        @{
+                            if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("GroupId") != null)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Warikan" asp-action="Create">支払登録</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Warikan" asp-action="Index">未精算一覧</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Provision" asp-action="Index">仮登録一覧</a>
+                                </li>
+                            }
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Logout">ログアウト</a>
                         </li>

@@ -181,6 +181,7 @@ namespace WarikakeWeb.Models
                     inner join tpay tp on tc.costid = tp.costid 
                     inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
                     where tc.GroupId = {GroupId} 
+                    and tc.status < 9 and tp.status < 9 and tr.status < 9
                     ), agg as
                     (select mt.cyear, mt.cmonth, sum(mt.costamount) costamount, 
                           max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
@@ -212,6 +213,7 @@ namespace WarikakeWeb.Models
                     inner join tpay tp on tc.costid = tp.costid 
                     inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
                     where tc.GroupId = {GroupId}
+                    and tc.status < 9 and tp.status < 9 and tr.status < 9
                     ), agg as
                     (select max(mt.cyear) cyear, max(mt.cmonth) cmonth, sum(mt.costamount) costamount, 
                           max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
@@ -258,6 +260,7 @@ namespace WarikakeWeb.Models
                     inner join tpay tp on tc.costid = tp.costid 
                     inner join trepay tr on tc.costid = tr.costid and tp.userid = tr.userid
                     where tc.GroupId = {GroupId}
+                    and tc.status < 9 and tp.status < 9 and tr.status < 9
                     ), agg as
                     (select mt.cyear, mt.cmonth, mt.cday, sum(mt.costamount) costamount, 
                           max(mt.payid) payid, mt.payuserid, sum(mt.payamount) payamount,
@@ -307,6 +310,7 @@ namespace WarikakeWeb.Models
                     inner join muser pu on tp.userid = pu.userid
                     inner join muser ru on tr.userid = ru.userid
                     where tc.GroupId = {GroupId} and tc.costdate = {dateTime}
+                    and tc.status < 9 and tp.status < 9 and tr.status < 9
                     order by tc.costid";
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(queryString).ToList();
             return warikakeQueries;

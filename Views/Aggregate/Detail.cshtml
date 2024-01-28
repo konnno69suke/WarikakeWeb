@@ -8,12 +8,25 @@
 <h4>グループ：@ViewBag.GroupName</h4>
 <form asp-action="Detail">
     <p>
-
-        <a asp-action="Detail" asp-route-yearMonth="@Model.prevMonth">前月</a>
+        @if (Model.prevMonth.Equals("0"))
+        {
+            <a>前月</a>
+        }
+        else
+        {
+            <a asp-action="Detail" asp-route-yearMonth="@Model.prevMonth">前月</a>
+        }
         |
         <span>@Model.currDisp</span>
         |
-        <a asp-action="Detail" asp-route-yearMonth="@Model.nextMonth">翌月</a>
+        @if (Model.nextMonth.Equals("0"))
+        {
+            <a>翌月</a>
+        }
+        else
+        {
+            <a asp-action="Detail" asp-route-yearMonth="@Model.nextMonth">翌月</a>
+        }
     </p>
     <div>
         <canvas id="genreCostMonthGraph"></canvas>

@@ -26,6 +26,28 @@
         });
         calccost();
     }
+    // 既に初期値がある画面の初期表示時用。calccost関数を呼ばない。
+function resttextnocalc() {
+    $('#members tr').each(function (i, row) {
+        // payがonのメンバーを編集可にする
+        var pch = $(row).find('td:nth-child(2) input[type="checkbox"]');
+        var ptx = $(row).find('td:nth-child(3) input[type="number"]');
+        if (pch.prop('checked')) {
+            ptx.prop('disabled', false);
+        } else {
+            ptx.prop('disabled', true);
+        }
+
+        // repayがonのメンバーを編集可にする
+        var rch = $(row).find('td:nth-child(6) input[type="checkbox"]');
+        var rtx = $(row).find('td:nth-child(7) input[type="number"]');
+        if (rch.prop('checked')) {
+            rtx.prop('disabled', false);
+        } else {
+            rtx.prop('disabled', true);
+        }
+    });
+}
 
 
     function calccost() {
