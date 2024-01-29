@@ -9,60 +9,57 @@
         @{
             if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("GroupId") != null)
             {
-                <p>
+                <div>
                     @Html.DisplayNameFor(model => model.GroupName)
                     :
                     @Html.DisplayFor(model => model.GroupName)
-                </p>
-                <p>
+                     | 
                     @Html.DisplayNameFor(model => model.UserName)
-                     : 
+                    :
                     @Html.DisplayFor(model => model.UserName)
-                </p>
+                </div>
+                <hr />
                 <div class="container">
+                    日々の確認と入力
                     <p>
+                        <a asp-area="" asp-controller="Warikan" asp-action="Create">支払登録</a>
+                         | 
                         <a asp-area="" asp-controller="Warikan" asp-action="Index">未精算一覧</a>
                          |
                         <a asp-area="" asp-controller="Provision" asp-action="Index">仮登録一覧</a>
-                         | 
-                        <a asp-area="" asp-controller="Aggregate" asp-action="Index">過去の集計</a>
                     </p>
                 </div>
-                if (Model.GroupUserId == Model.UserId){
-                    <div class="container">
-                        マスタメンテナンス
-                        <p>
-                            <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
-                             | 
-                            <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
-                             | 
-                            <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
-                        </p>
-                    </div>
-                    <div class="container">
-                         グループリーダー機能
-                        <p>
+                <div class="container">
+                    各種設定
+                    <p>
+                        <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
+                        |
+                        <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
+                        |
+                        <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
+                        @{if (Model.GroupUserId == Model.UserId){
+                            
                             <a asp-area="" asp-controller="MGroups" asp-action="Index">グループ</a>
-                             | 
+                            }
+                        }
+                    </p>
+                </div>
+                <div class="container">
+                    データ管理
+                    <p>
+                        <a asp-area="" asp-controller="Aggregate" asp-action="Index">過去の集計</a>
+                        |
+                        <a asp-area="" asp-controller="CsvExport" asp-action="Export">CSVエクスポート</a>
+                        @{
+                            if (Model.GroupUserId == Model.UserId)
+                            {
+                            
                             <a asp-area="" asp-controller="CsvImport" asp-action="Import">CSVインポート</a>
-                             |
-                            <a asp-area="" asp-controller="CsvExport" asp-action="Export">CSVエクスポート</a>
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <div class="container">
-                        マスタメンテナンス
-                        <p>
-                            <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
-                             | 
-                            <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
-                             | 
-                            <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
-                        </p>
-                    </div>
-                }
+                            }
+                        }
+                    </p>
+                </div>
+                <hr />
                 <p>
                     <a asp-area="" asp-controller="Home" asp-action="Logout">ログアウト</a>
                 </p>

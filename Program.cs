@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using WarikakeWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,7 +27,6 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
 }
 
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -35,17 +34,6 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
-// log
-app.Logger.LogInformation("Adding Routes");
-//app.MapGet("/", () => "Hello World!");
-app.Logger.LogInformation("Starting the app");
-app.MapGet("/Home", async (ILogger<Program> logger, HttpResponse response) =>
-{
-    logger.LogInformation("Testing logging in Program.cs");
-    await response.WriteAsync("Testing");
-});
-
 
 app.UseHttpsRedirection();
 app.UseDefaultFiles();

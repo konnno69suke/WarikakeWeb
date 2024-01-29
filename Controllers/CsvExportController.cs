@@ -67,7 +67,7 @@ namespace WarikakeWeb.Controllers
                 ").ToList();
 
             StringBuilder sb = new StringBuilder("");
-            sb.AppendLine("#入力日時,購入日,品目,金額,くま立替,らむ立替,ねこ立替,くま分担,らむ分担,ねこ分担,くま端数,らむ端数,ねこ端数,精算状況");
+            sb.AppendLine("#入力日時,購入日,品目,金額,DB立替,RM立替,FN立替,DB分担,RM分担,FN分担,DB端数,RM端数,FN端数,精算状況");
             if (export.hasDoubleQuote.Equals("has"))
             {
                 csvMigrations.ForEach(a => sb.AppendLine(CreateCsvBodyWithQuote(a)));
