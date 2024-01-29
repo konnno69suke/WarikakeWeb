@@ -171,6 +171,7 @@ namespace WarikakeWeb.Controllers
             string currPg = "ImportMigrate";
             int status = (int)statusEnum.移行;
             int migCnt = 0;
+            int skpCnt = 0;
             ModelLogic modelLogic = new ModelLogic(_context);
 
 
@@ -178,6 +179,19 @@ namespace WarikakeWeb.Controllers
             List<CsvMigration> csvList = _context.CsvMigration.Where(c => c.status == 0).ToList();
             foreach (var csv in csvList)
             {
+                // 同一データ重複チェック
+                TCost costChk = _context.TCost.Where(c => c.CostDate == DateTime.ParseExact(csv.buyDate, format2, null) && c.CreatedDate == DateTime.ParseExact(csv.inputDate, format1, null) && c.CostAmount == int.Parse(csv.buyAmount)).FirstOrDefault();
+                if (costChk != null && costChk.CostStatus != (int)statusEnum.削除)
+                {
+                    csv.status = 9;
+                    _context.CsvMigration.Update(csv);
+                    _context.SaveChanges();
+
+                    skpCnt++;
+                    continue;
+                }
+
+
                 int PayId = 0;
                 int RepayId = 0;
 
@@ -322,15 +336,26 @@ namespace WarikakeWeb.Controllers
                     _context.SaveChanges();
                 }
             }
+            string migResult = "";
             if(migCnt > 0)
             {
-                ViewBag.migCnt = "データ移行件数は" + migCnt + "です。";
+                migResult = "データ移行件数は" + migCnt + "です。";
             }
             else
             {
-                ViewBag.migCnt = "データは移行されませんでした。";
+                migResult = "データは移行されませんでした。";
             }
-            
+            if (skpCnt > 0)
+            {
+                migResult += skpCnt + "件はデータ重複のため移行されませんでした。";
+            }
+            else 
+            {
+                migResult += "重複データはありませんでした。";
+            }
+
+            ViewBag.migCnt = migResult;
+
             return View();
         }
 
