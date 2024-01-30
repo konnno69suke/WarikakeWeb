@@ -58,6 +58,7 @@ namespace WarikakeWeb.Models
         // 仮登録、未精算の一覧取得
         public List<WarikakeQuery> GetUnSettledWarikakeQueries(int GroupId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}");
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(
                 $@"select tc.CostId, tc.CostTitle, tc.GroupId, mgr.GroupName, tc.GenreId, mge.GenreName, tc.status, ' ' statusName, tc.CostStatus, tc.CostAmount, tc.CostDate, 
                           tp.payid, tp.userid PayUserId, mup.username PayUserName, tp.PayAmount, 
@@ -78,6 +79,7 @@ namespace WarikakeWeb.Models
         // 仮登録の一覧取得
         public List<WarikakeQuery> GetProvisionWarikakeQueries(int GroupId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}");
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(
                 $@"select tc.CostId, tc.CostTitle, tc.GroupId, mgr.GroupName, tc.GenreId, mge.GenreName, tc.status, ' ' statusName, tc.CostStatus, tc.CostAmount, tc.CostDate, 
                           tp.payid, tp.userid PayUserId, mup.username PayUserName, tp.PayAmount, 
@@ -99,6 +101,7 @@ namespace WarikakeWeb.Models
         // 未精算、手動精算の合計一覧取得
         public List<WarikakeQuery> GetUnSettledSumWarikakeQueries(int GroupId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}");
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(
                 $@"select -1 CostId, ' ' CostTitle, 0 GroupId, ' ' GroupName, 0 GenreId, N'合計' GenreName, 7 status, ' ' statusName, 0 CostStatus, sum(tc.CostAmount) CostAmount, max(tc.CostDate) CostDate, 
                           0 payid, tp.userid PayUserId, mup.username PayUserName, sum(tp.PayAmount) PayAmount, 
@@ -118,6 +121,7 @@ namespace WarikakeWeb.Models
         // 未精算、手動精算の一覧取得（一括精算の更新処理直前用）
         public List<WarikakeQuery> GetUnSettledOrManualWarikakeQueries(int GroupId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}");
             List<WarikakeQuery> warikakeQueryList = _context.Database.SqlQuery<WarikakeQuery>(
                 $@"select tc.costid, ' ' CostTitle, 0 GroupId, ' ' GroupName, 0 GenreId, ' ' GenreName, 0 status, ' ' statusName, 0 CostStatus, 0 CostAmount, sysdatetime() CostDate, 
                           0 payid, 0 PayUserId, ' ' PayUserName, 0 PayAmount, 
@@ -131,6 +135,7 @@ namespace WarikakeWeb.Models
         // 指定された支払情報の取得
         public List<WarikakeQuery> GetWarikakeQueries(int GroupId, int CostId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {CostId}");
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(
                     $@"select tc.CostId, tc.CostTitle, tc.GroupId, mgr.GroupName, tc.GenreId, mge.GenreName, tc.status, ' ' statusName, tc.CostStatus, tc.CostAmount, tc.CostDate, 
                           tp.payid, tp.userid PayUserId, mup.username PayUserName, tp.PayAmount, 
@@ -152,6 +157,7 @@ namespace WarikakeWeb.Models
         // 指定された仮登録の支払情報の取得
         public List<WarikakeQuery> GetProvisionQueries(int GroupId, int CostId)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {CostId}");
             List<WarikakeQuery> warikakeQueries = _context.Database.SqlQuery<WarikakeQuery>(
                     $@"select tc.CostId, tc.CostTitle, tc.GroupId, mgr.GroupName, tc.GenreId, mge.GenreName, tc.status, ' ' statusName, tc.CostStatus, tc.CostAmount, tc.CostDate, 
                           tp.payid, tp.userid PayUserId, mup.username PayUserName, tp.PayAmount, 
@@ -173,6 +179,7 @@ namespace WarikakeWeb.Models
         // 月別集計表
         public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {year}, {GroupId}");
             FormattableString queryString = $@"with main as
                     (select year(tc.costdate) cyear, month(tc.costdate) cmonth, tc.costamount costamount, 
                           tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
@@ -204,7 +211,7 @@ namespace WarikakeWeb.Models
         // 年間集計
         public List<WarikakeQuery> GetAggregatedSumWarikakeQueries(int GroupId, int year)
         {
-
+            Serilog.Log.Information($"SQL param:{GroupId}, {year}, {GroupId}");
             FormattableString queryString = $@"with main as
                     (select year(tc.costdate) cyear, month(tc.costdate) cmonth, tc.costamount costamount, 
                           tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
@@ -234,6 +241,7 @@ namespace WarikakeWeb.Models
         // グラフ用の種別年間推移
         public List<WarikakeQuery> GetAggreateGraphWarikakeQueries(int GroupId, int year)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {year}");
             FormattableString queryString = $@"with main as 
                     (select tc.genreid, tc.genrename, tc.costamount, year(tc.costdate) cyear, month(tc.costdate) cmonth 
                     from tcost tc
@@ -252,6 +260,7 @@ namespace WarikakeWeb.Models
         // 日別集計表
         public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year, int month)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {year}, {month}, {GroupId}");
             FormattableString queryString = $@"with main as
                     (select year(tc.costdate) cyear, month(tc.costdate) cmonth, day(tc.costdate) cday, tc.costamount costamount, 
                           tp.payid, tp.userid PayUserId, tp.PayAmount payamount, 
@@ -282,6 +291,7 @@ namespace WarikakeWeb.Models
         // グラフ用の種別年間推移
         public List<WarikakeQuery> GetAggreateGraphWarikakeQueries(int GroupId, int year, int month)
         {
+            Serilog.Log.Information($"SQL param:{GroupId}, {year}, {month}");
             FormattableString queryString = $@"with main as 
                     (select tc.genreid, tc.genrename, tc.costamount, year(tc.costdate) cyear, month(tc.costdate) cmonth, day(tc.costdate) cday 
                     from tcost tc
@@ -301,6 +311,7 @@ namespace WarikakeWeb.Models
         public List<WarikakeQuery> GetAggregatedWarikakeQueries(int GroupId, int year, int month, int day)
         {
             DateTime dateTime = new DateTime(year, month, day);
+            Serilog.Log.Information($"SQL param:{GroupId}, {dateTime}");
             FormattableString queryString = $@"select tc.costid, format(tc.costdate, 'yyyy年MM月dd日') costtitle, tc.groupid, ' ' groupname, tc.genreid, tc.genrename, 7 status, ' ' statusname, coststatus, tc.costamount, tc.costdate,
                     tp.payid, tp.userid PayUserId, pu.username payusername, tp.PayAmount payamount, 
                     tr.repayid, tr.userid RepayUserId, ru.username repayusername, tr.RepayAmount repayamount
@@ -878,21 +889,23 @@ namespace WarikakeWeb.Models
         // 表示用メッセージ一覧の取得
 
 
-        public String repayMessage(List<WarikakeQuery> warikakeQueries)
+        public List<String> repayMessage(List<WarikakeQuery> warikakeQueries)
         {
             WarikakeProcess warikakeProcess = new WarikakeProcess();
             warikakeProcess = warikakeProcess.GetWarikakeProcess(warikakeQueries);
             // 精算指示の文字列作成
-            StringBuilder sb = new StringBuilder("");
+            List<string> messageList = new List<string>();
             foreach (WarikakeUserProcess plsUsr in warikakeProcess.plusUsers)
             {
-                sb.Append(plsUsr.UserName).Append("は合計").Append(plsUsr.processAmount).Append("円を支払うこと。\r\n");
+                //sb.Append(plsUsr.UserName).Append("は合計").Append(plsUsr.processAmount).Append("円を支払うこと。\r\n");
+                messageList.Add($"{plsUsr.UserName}は合計{plsUsr.processAmount}円を支払うこと。");
             }
             foreach (WarikakeUserProcess mnsUsr in warikakeProcess.minusUsers)
             {
-                sb.Append(mnsUsr.UserName).Append("は合計").Append(mnsUsr.processAmount * -1).Append("円受け取ること。\r\n");
+                //sb.Append(mnsUsr.UserName).Append("は合計").Append(mnsUsr.processAmount * -1).Append("円受け取ること。\r\n");
+                messageList.Add($"{mnsUsr.UserName}は合計{mnsUsr.processAmount * -1}円を受け取ること。");
             }
-            return sb.ToString();
+            return messageList;
         }
         public WarikakeProcess GetWarikakeProcess(List<WarikakeQuery> warikakeQueries)
         {

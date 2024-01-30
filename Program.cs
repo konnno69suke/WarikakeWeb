@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using WarikakeWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +20,12 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromSeconds(1200);   //todo 20•ª
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+});
+
+// logging
+builder.Host.UseSerilog((hostContext, services, configuration) => 
+{
+    configuration.WriteTo.File(path: $"logs/app_.log", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
 });
 
 var app = builder.Build();

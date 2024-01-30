@@ -7,15 +7,16 @@
 <h4>グループ：@ViewBag.GroupName</h4>
 @using (Html.BeginForm("Publish", "Subscribe", FormMethod.Post))
 {
-    String resultMessage = ViewBag.ResultMessage;
-    if (resultMessage.Length <= 0)
+    @if(ViewBag.ResultMessage == null)
     {
         <h3>以下の定期支払を一括仮登録しますか？</h3>
     }
     else
     {
-        @ViewBag.ResultMessage
-        ;
+        foreach(string message in ViewBag.ResultMessage)
+        {
+            <li>@message</li>
+        }
     }
     <tbody>
         <table class="table">
