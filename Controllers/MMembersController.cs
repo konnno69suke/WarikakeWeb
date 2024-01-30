@@ -30,6 +30,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             // 所有グループのみ表示可
             List<MMemberDisp> memberList = _context.Database.SqlQuery<MMemberDisp>($@"
                 select mm.Id, 0 gid, mg.groupname, 0 mid, mu.username
@@ -52,6 +54,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             List<MGroup> groups = _context.MGroup.Where(g => g.UserId == (int)UserId && g.status == 1).ToList();
             ViewBag.Groups = new SelectList(groups.Select(g => new { Id = g.GroupId, Name = g.GroupName}), "Id", "Name");
             List<MUser> users = _context.MUser.Where(u => u.status == 1).ToList();
@@ -73,6 +77,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             List<MGroup> groups = _context.MGroup.Where(g => g.UserId == (int)UserId && g.status == 1).ToList();
             ViewBag.Groups = new SelectList(groups.Select(g => new { Id = g.GroupId, Name = g.GroupName }), "Id", "Name");
@@ -120,11 +125,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Delete(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");   
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -159,6 +167,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 業務入力チェック
             if (0 < DelPersonCheck(mMemberDisp, (int)UserId))

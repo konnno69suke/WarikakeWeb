@@ -16,13 +16,14 @@
     </p>
     }
 }
-@if (ViewBag.WarikakeProcResult != null && ViewBag.WarikakeProcResult.Length > 0)
-{
-    <div>
-        @ViewBag.WarikakeProcResult
-    </div>
-    <hr />
-}
+<ul>
+    @foreach (string message in ViewBag.WarikakeProcResult)
+    {
+        <li>
+            @message
+        </li>
+    }
+</ul>
 <table class="table">
     <thead>
         <tr>

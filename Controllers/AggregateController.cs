@@ -20,12 +20,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Index(int year)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
@@ -67,12 +69,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Detail(string yearMonth)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
@@ -140,12 +144,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Date(string date)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();

@@ -32,6 +32,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             MGroup mGroup = _context.MGroup.Where(g => g.GroupId == GroupId && g.status == 1).FirstOrDefault();
             List<MUser> users = null;
             if (mGroup.UserId == UserId)
@@ -67,11 +69,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Details(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -95,11 +100,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Create()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             MUserDisp mUserDisp = new MUserDisp();
             mUserDisp.StartDate = DateTime.Now;
             return View(mUserDisp);
@@ -119,6 +127,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (ModelState.IsValid)
             {
 
@@ -156,11 +166,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Edit(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -190,6 +203,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id != mUserDisp.Id)
             {
                 return NotFound();
@@ -248,11 +263,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Delete(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId"); 
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -280,6 +298,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id != mUserDisp.Id)
             {
                 return NotFound();

@@ -24,12 +24,15 @@ namespace WarikakeWeb.Controllers
         public ActionResult Index()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
+
             List<SubscribeDisp> subscribeDisps = IndexLogic((int)GroupId);
             return View(subscribeDisps);
         }
@@ -44,6 +47,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
+
             // グループ情報に応じた登録画面を表示
             List<MGenre> genres = _context.MGenre.Where(g => g.status == 1 && g.GroupId == (int)GroupId).ToList();
             ViewBag.Genres = new SelectList(genres.Select(u => new { Id = u.GenreId, Name = u.GenreName }), "Id", "Name");
@@ -92,6 +97,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId:none");
+
             List<MGenre> genres = _context.MGenre.Where(g => g.status == 1 && g.GroupId == (int)GroupId).ToList();
             ViewBag.Genres = new SelectList(genres.Select(u => new { Id = u.GenreId, Name = u.GenreName }), "Id", "Name");
             // 端数を優先するユーザー情報をセット
@@ -123,6 +130,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
             List<MGenre> genres = _context.MGenre.Where(g => g.status == 1 && g.GroupId == (int)GroupId).ToList();
             ViewBag.Genres = new SelectList(genres.Select(u => new { Id = u.GenreId, Name = u.GenreName }), "Id", "Name");
             // 端数を優先するユーザー情報をセット
@@ -227,7 +236,7 @@ namespace WarikakeWeb.Controllers
                     // セッション切れ
                     return RedirectToAction("Login", "Home");
                 }
-
+                Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
                 if (ModelState.IsValid)
                 {
@@ -369,11 +378,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Delete(int id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
             SubscribeDisp wariDisp = DispLogic(id, (int)GroupId);
             return View(wariDisp);
         }
@@ -384,11 +396,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Delete(int id, IFormCollection collection)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
             try
             {
                 UpdateLogic(id, 9);
@@ -405,14 +420,17 @@ namespace WarikakeWeb.Controllers
         public ActionResult Publish()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
+
             List<SubscribeDisp> subscribeIndex = IndexLogic((int)GroupId);
-            ViewBag.ResultMessage = "";
+            ViewBag.ResultMessage = null;
             return View(subscribeIndex);
         }
 
@@ -422,16 +440,18 @@ namespace WarikakeWeb.Controllers
         public ActionResult Publish(int id, List<SubscribeDisp> subscribeDisps)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
             try
             {
-                StringBuilder sb = new StringBuilder("");
+                List<string> messageList = new List<string>();
                 foreach (SubscribeDisp subDis in subscribeDisps)
                 {
                     Boolean updFlg = false;
@@ -461,8 +481,7 @@ namespace WarikakeWeb.Controllers
                             if (weekOfMonthList.Contains(weekOfMonth) && dayOfWeekList.Contains(dayOfWeek))
                             {
                                 createResult = createCostData(subid, loopDate);
-                                sb.Append(createResult);
-                                sb.Append(Environment.NewLine);
+                                messageList.Add(createResult);
                             }
                             loopDate = loopDate.AddDays(1);
                         }
@@ -475,8 +494,7 @@ namespace WarikakeWeb.Controllers
                             if (dayList.Contains(day))
                             {
                                 createResult = createCostData(subid, loopDate);
-                                sb.Append(createResult);
-                                sb.Append(Environment.NewLine);
+                                messageList.Add(createResult);
                             }
 
                             int lastDay = DateTime.DaysInMonth(loopDate.Year, loopDate.Month);
@@ -485,8 +503,7 @@ namespace WarikakeWeb.Controllers
                                 if ((dayList.Contains(29) && lastDay < 29) || (dayList.Contains(30) && lastDay < 30) || (dayList.Contains(31) && lastDay < 31))
                                 {
                                     createResult = createCostData(subid, loopDate);
-                                    sb.Append(createResult);
-                                    sb.Append(Environment.NewLine);
+                                    messageList.Add(createResult);
                                 }
                             }
                             loopDate = loopDate.AddDays(1);
@@ -494,29 +511,26 @@ namespace WarikakeWeb.Controllers
                     }
                     else
                     {
-                        // データ不正
-                        // todo 
-
+                        // 不正入力
+                        messageList.Add("入力内容が処理できませんでした。");
+                        ViewBag.ResultMessage = messageList;
+                        return View(subscribeDisps);
                     }
                 }
 
                 // 
-                String resultMessage = sb.ToString();
-                if(resultMessage.Length > 0)
+                if(messageList.Count == 0)
                 {
-                    ViewBag.ResultMessage = resultMessage;
+                    messageList.Add("仮登録するべきデータは無かったようです。");
                 }
-                else
-                {
-                    ViewBag.ResultMessage = "仮登録するべきデータは無かったようです。";
-                }
+                ViewBag.ResultMessage = messageList;
 
                 List<SubscribeDisp> subscribeIndex = IndexLogic((int)GroupId);
                 return View(subscribeIndex);
             }
             catch
             {
-                return View();
+                return View(subscribeDisps);
             }
         }
 

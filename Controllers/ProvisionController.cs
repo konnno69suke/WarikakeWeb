@@ -26,12 +26,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Index()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             ViewBag.GroupName = HttpContext.Session.GetString("GroupName");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
             WarikakeIndex warikakeIndex = new WarikakeIndex();
 
@@ -53,6 +55,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
             // DB検索
             WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
@@ -83,6 +86,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {input.CostId}");
 
             // 種別プルダウンのセット
             MGenre mGenre = new MGenre(_context);
@@ -129,6 +133,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
             // 対象データの表示欄
             WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
@@ -139,7 +144,7 @@ namespace WarikakeWeb.Controllers
 
             // 未精算メッセージのセット
             WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WariProcResult = warikakeProcess.repayMessage(warikakeQueryList);
+            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(warikakeQueryList);
 
             return View(wariDisp);
         }
@@ -156,6 +161,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
             try
             {
                 // 更新処理
@@ -180,6 +187,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
             // DB検索
             WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
@@ -212,6 +220,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {input.CostId}");
 
             // 種別プルダウンのセット
             MGenre mGenre = new MGenre(_context);

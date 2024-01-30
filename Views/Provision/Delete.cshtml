@@ -56,7 +56,10 @@
                 </tr>
             </table>
         }
-        @ViewBag.WariProcResult
+        @foreach (string message in ViewBag.WarikakeProcResult)
+        {
+                <li>@message</li>
+        }
         <hr />
     </dl>
 

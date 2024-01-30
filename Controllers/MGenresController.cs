@@ -25,11 +25,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Index()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             List<MGenre> genres = _context.MGenre.Where(g => g.status == 1 && g.GroupId == GroupId).ToList();
             List<MGenreDisp> genreDisps = new List<MGenreDisp>();
             foreach (MGenre genre in genres)
@@ -47,11 +50,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Create()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             return View();
         }
 
@@ -66,6 +72,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (ModelState.IsValid)
             {
                 // 業務入力チェック
@@ -95,11 +103,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Edit(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -131,6 +142,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id != mGenreDisp.Id)
             {
                 return NotFound();
@@ -166,11 +179,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Delete(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             if (id == null)
             {
                 return NotFound();
@@ -201,6 +217,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             var mGenre = _context.MGenre.FirstOrDefault(m => m.Id == id && m.status == 1);
             if (mGenre != null)
             {

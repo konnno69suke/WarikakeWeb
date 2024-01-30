@@ -28,6 +28,8 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             HomeDisp homeDisp = new HomeDisp();
             MUser user = _context.MUser.FirstOrDefault(u => u.UserId == UserId && u.status == 1);
             homeDisp.UserId = UserId;
@@ -41,12 +43,9 @@ namespace WarikakeWeb.Controllers
             return View(homeDisp);
         }
 
-        public ActionResult Privacy()
-        {
-            return View();
-        }
         public ActionResult Login()
         {
+            Serilog.Log.Information($"GroupId: notyet, UserId: notyet");
             return View();
         }
 
@@ -72,10 +71,13 @@ namespace WarikakeWeb.Controllers
                             HttpContext.Session.SetInt32("GroupId", member.GroupId);
                             MGroup group = _context.MGroup.FirstOrDefault(m => m.GroupId == member.GroupId);
                             HttpContext.Session.SetString("GroupName", group.GroupName);
+
+                            Serilog.Log.Information($"GroupId:{member.GroupId}, UserId:{user.UserId}");
                             return RedirectToAction("Index");
                         }
                     }
                     // 複数グループに属している場合はグループ選択画面へ遷移する
+                    Serilog.Log.Information($"GroupId: notyet, UserId:{user.UserId}");
                     return RedirectToAction("GroupSet");
                 }
             }
@@ -92,6 +94,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login");
             }
+            Serilog.Log.Information($"GroupId: notyet, UserId:{UserId}");
 
             HomeDisp homeDisp = new HomeDisp();
             homeDisp.UserId = (int)UserId;
@@ -119,6 +122,7 @@ namespace WarikakeWeb.Controllers
                 // セッション切れ
                 return RedirectToAction("Login");
             }
+            Serilog.Log.Information($"GroupId: notyet, UserId:{UserId}");
 
             if (ModelState.IsValid)
             {
@@ -128,6 +132,7 @@ namespace WarikakeWeb.Controllers
                     HttpContext.Session.SetInt32("GroupId", group.GroupId);
                     HttpContext.Session.SetString("GroupName", group.GroupName);
 
+                    Serilog.Log.Information($"GroupId:{group.GroupId}, UserId:{UserId}");
                     return RedirectToAction("Index");
                 }
             }
@@ -144,6 +149,7 @@ namespace WarikakeWeb.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            Serilog.Log.Information($"GroupId: logout, UserId: logout");
             return RedirectToAction("Login");
         }
     }

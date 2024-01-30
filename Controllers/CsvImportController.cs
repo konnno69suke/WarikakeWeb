@@ -24,11 +24,14 @@ namespace WarikakeWeb.Controllers
         public IActionResult Import()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             CsvImport csvImport = new CsvImport();
             return View(csvImport);
         }
@@ -41,11 +44,14 @@ namespace WarikakeWeb.Controllers
             if (file != null && file.Length > 0)
             {
                 int? GroupId = HttpContext.Session.GetInt32("GroupId");
+                int? UserId = HttpContext.Session.GetInt32("UserId");
                 if (GroupId == null)
                 {
                     // セッション切れ
                     return RedirectToAction("Login", "Home");
                 }
+                Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
                 string fileName = Path.GetFileName(file.FileName);
                 string fileExtension = Path.GetExtension(fileName);
 
@@ -54,7 +60,6 @@ namespace WarikakeWeb.Controllers
                     DateTime currDate = DateTime.Now;
                     string filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", fileName + currDate.ToString("_yyyyMMddHHmmss"));
                     
-                    int? UserId = HttpContext.Session.GetInt32("UserId");
                     int impCnt = 0;
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -136,11 +141,14 @@ namespace WarikakeWeb.Controllers
         public ActionResult Migrate()
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
+
             int migCnt = _context.CsvMigration.Where(c => c.status == 0).Count();
             if(migCnt > 0)
             {
@@ -158,16 +166,18 @@ namespace WarikakeWeb.Controllers
         public ActionResult Migrate(CsvImport import)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             if (GroupId == null)
             {
                 // セッション切れ
                 return RedirectToAction("Login", "Home");
             }
+            Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             string format1 = "yyyy年MM月dd日HH時mm分ss秒";
             string format2 = "yyyyMMdd";
             DateTime currTime = DateTime.Now;
-            int? UserId = HttpContext.Session.GetInt32("UserId");
+
             string currPg = "ImportMigrate";
             int status = (int)statusEnum.移行;
             int migCnt = 0;
