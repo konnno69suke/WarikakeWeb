@@ -19,5 +19,11 @@ namespace WarikakeWeb.Models
         public DateTime? UpdatedDate { get; set; }
         public String? UpdateUser { get; set; }
         public String? UpdatePg { get; set; }
+
+        public String ToString()
+        {
+            FormattableString fs = $"MGroup :{Id}, {status}, {GroupId}, {GroupName}, {UserId}, {StartDate}";
+            return fs.ToString();
+        }
     }
 }

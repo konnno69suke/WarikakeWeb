@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Humanizer;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.VisualStudio.TextTemplating;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,7 +19,7 @@ namespace WarikakeWeb.Models
 
     //SQLで取得する際のモデル
     public class WarikakeQuery
-    { 
+    {
         public int CostId { get; set; }
         [Display(Name = "Cost Title")]
         public String? CostTitle { get; set; }
@@ -333,6 +336,8 @@ namespace WarikakeWeb.Models
             String currPg = "WarikakeInsert";
             ModelLogic modelLogic = new ModelLogic(_context);
 
+            Serilog.Log.Information($"SQL param: WarikakeDisp:{input.ToString()}, GroupId:{GroupId}, UserId:{UserId}");
+
             int payId = 0;
             int repayId = 0;
 
@@ -424,6 +429,8 @@ namespace WarikakeWeb.Models
         {
             DateTime dateTime = DateTime.Now;
 
+            Serilog.Log.Information($"SQL param: CostId:{CostId}, UserId:{UserId}, status:{status}");
+
             List<TCost> costList = _context.TCost.Where(c => c.CostId == CostId).ToList();
             foreach (TCost cost in costList)
             {
@@ -470,6 +477,7 @@ namespace WarikakeWeb.Models
             DateTime dateTime = DateTime.Now;
             int CostId = input.CostId;
 
+            Serilog.Log.Information($"SQL param: WarikakeDisp:{input.ToString()}, GroupId:{GroupId}, UserId:{UserId}, status:{status}");
 
             TCost existingCost = _context.TCost.FirstOrDefault(c => c.CostId == CostId);
             existingCost.CostId = CostId;
@@ -537,7 +545,7 @@ namespace WarikakeWeb.Models
         public int GenreId { get; set; }
         // 人
 
-        public string currDisp {  get; set; }
+        public string currDisp { get; set; }
         public int prevYear { get; set; }
         public int currYear { get; set; }
         public int nextYear { get; set; }
@@ -560,7 +568,7 @@ namespace WarikakeWeb.Models
     {
         public List<WarikakeDisp> warikakeDisps { get; set; }
 
-        public WarikakeDisp warikakeSum { get; set;}
+        public WarikakeDisp warikakeSum { get; set; }
 
         public WarikakeIndex()
         {
@@ -602,6 +610,23 @@ namespace WarikakeWeb.Models
         {
             Pays = new List<WarikakePayDisp>();
             Repays = new List<WarikakeRepayDisp>();
+        }
+
+        //ログ出力用にオーバーライド
+        public string ToString()
+        {
+            FormattableString fs = $"Wari :{CostId}, {CostTitle}, {GroupId}, {GroupName}, {GenreId}, {GenreName}, {status}, {statusName}, {CostStatus}, {CostAmount}, {CostDisp}, {CostDate}";
+            StringBuilder sb = new StringBuilder();
+            sb.Append(fs);
+            for (int i = 0; i < Pays.Count; i++)
+            {
+                sb.Append($" Pays({i}) :{Pays[i].PayId}, {Pays[i].PayUserId}, {Pays[i].PayUserOn}, {Pays[i].PayUserName}, {Pays[i].PayAmount}, {Pays[i].PayDisp}");
+            }
+            for (int j = 0; j < Repays.Count; j++)
+            {
+                sb.Append($" Reps({j}) :{Repays[j].RepayId}, {Repays[j].RepayUserId}, {Repays[j].RepayUserOn}, {Repays[j].RepayUserName}, {Repays[j].RepayAmount}, {Repays[j].RepayDisp}");
+            }
+            return sb.ToString();
         }
 
         // 一覧画面表示用に編集
@@ -727,9 +752,9 @@ namespace WarikakeWeb.Models
             int prevGenreId = -1;
             int day = -1;
             ChartDataset chartDataset = new ChartDataset();
-            foreach(WarikakeQuery warikakeQuery in warikakeQueries)
+            foreach (WarikakeQuery warikakeQuery in warikakeQueries)
             {
-                if(prevGenreId != warikakeQuery.GenreId)
+                if (prevGenreId != warikakeQuery.GenreId)
                 {
                     if (prevGenreId != -1)
                     {
@@ -766,9 +791,9 @@ namespace WarikakeWeb.Models
             WarikakeGraph warikakeGraph = new WarikakeGraph();
             foreach (WarikakeQuery warikakeQuery in warikakeQueries)
             {
-                if(prevGenreId != warikakeQuery.GenreId)
+                if (prevGenreId != warikakeQuery.GenreId)
                 {
-                    if (prevGenreId != -1) 
+                    if (prevGenreId != -1)
                     {
                         warikakeGraphs.Add(warikakeGraph);
                         warikakeGraph = new WarikakeGraph();

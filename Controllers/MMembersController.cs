@@ -112,6 +112,7 @@ namespace WarikakeWeb.Controllers
                 mMember.UpdatedDate = currTime;
                 mMember.UpdateUser = UserId.ToString();
                 mMember.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MMember:{mMember.ToString()}");
                 _context.Add(mMember);
                 _context.SaveChanges();
 
@@ -145,6 +146,7 @@ namespace WarikakeWeb.Controllers
             }
 
             // 指定メンバーの表示情報を取得
+            Serilog.Log.Information($"SQL param: {id}");
             MMemberDisp mMemberDisp = _context.Database.SqlQuery<MMemberDisp>($@"
                 select mm.id, mm.groupid gid, mg.groupname, mm.userid mid, mu.username
                 from mmember mm inner join mgroup mg on mm.groupid = mg.groupid
@@ -186,6 +188,7 @@ namespace WarikakeWeb.Controllers
                     mMember.UpdatedDate = currTime;
                     mMember.UpdateUser = UserId.ToString();
                     mMember.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MMember: {mMember.ToString()}");
                     _context.Update(mMember);
                     _context.SaveChanges();
                 }

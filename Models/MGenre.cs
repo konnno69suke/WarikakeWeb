@@ -44,5 +44,10 @@ namespace WarikakeWeb.Models
             List<MGenre> genres = _context.MGenre.Where(g => g.GroupId == groupId && g.status == 1).ToList();
             return new SelectList(genres.Select(u => new { Id = u.GenreId, Name = u.GenreName }), "Id", "Name");
         }
+
+        public String ToString() {
+            FormattableString fs = $"MGenre :{Id}, {status}, {GenreName}, {GenreId}, {GroupId}";
+            return fs.ToString();
+        }
     }
 }

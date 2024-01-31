@@ -33,6 +33,7 @@ namespace WarikakeWeb.Controllers
 
             List<MGroup> groups = _context.MGroup.Where(g => g.status == 1).ToList();
 
+            Serilog.Log.Information($"SQL param:{UserId}");
             List<MGroupDisp> groupDisps = _context.Database.SqlQuery<MGroupDisp>($@"
                 select mg.id, mg.groupname, mv.username mastername, mg.startdate
                 from mgroup mg inner join mmember mm on mg.groupid = mm.groupid
@@ -67,6 +68,7 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
+            Serilog.Log.Information($"SQL param:{UserId}, {mGroup.GroupId}");
             List<MGroupQuery> queryList = _context.Database.SqlQuery<MGroupQuery>($@"
                 select mg.id, mg.groupname, mv.username mastername, mg.startdate,
                 mu.Id memid, mu.username memname, mu.startdate memstartdate 
@@ -150,6 +152,7 @@ namespace WarikakeWeb.Controllers
                 mGroup.UpdatedDate = currTime;
                 mGroup.UpdateUser = UserId.ToString();
                 mGroup.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MGroup:{mGroup.ToString()}");
                 _context.Add(mGroup);
 
                 MMember mMember = new MMember();
@@ -162,6 +165,7 @@ namespace WarikakeWeb.Controllers
                 mMember.UpdatedDate = currTime;
                 mMember.UpdateUser = UserId.ToString();
                 mMember.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MMember:{mMember.ToString()}");
                 _context.Add(mMember);
 
                 _context.SaveChanges();
@@ -235,6 +239,7 @@ namespace WarikakeWeb.Controllers
                     existingGroup.UpdatedDate = currDate;
                     existingGroup.UpdateUser = UserId.ToString();
                     existingGroup.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MGroup:{existingGroup.ToString()}");
                     _context.Update(existingGroup);
                     _context.SaveChanges();
                 }
@@ -312,6 +317,9 @@ namespace WarikakeWeb.Controllers
                     mGroup.UpdatedDate = currTime;
                     mGroup.UpdateUser = UserId.ToString();
                     mGroup.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MGroup:{mGroup.ToString()}");
+                    _context.MGroup.Update(mGroup);
+                    _context.SaveChanges();
 
                     List<MMember> memberList = _context.MMember.Where(m => m.GroupId == mGroup.GroupId && m.status == 1).ToList();
                     foreach (MMember member in memberList)
@@ -320,13 +328,14 @@ namespace WarikakeWeb.Controllers
                         member.UpdatedDate = currTime;
                         member.UpdateUser = UserId.ToString();
                         member.UpdatePg = currPg;
+                        Serilog.Log.Information($"SQL param: MMember:{member.ToString()}");
+                        _context.MMember.Update(member);
                     }
                     _context.SaveChanges();
                 }
                 catch (Exception ex)
                 {
-                    // todo パラメータなしのdelete画面では表示エラーになるのでは
-                    return View();
+                    return View(mGroupDisp);
                 }
             }
             return RedirectToAction(nameof(Index));

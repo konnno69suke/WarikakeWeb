@@ -1,10 +1,34 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using WarikakeWeb.Data;
 
 namespace WarikakeWeb.Models
 {
     public class TDateSubscribe
     {
+        WarikakeWebContext _context;
+
+        public TDateSubscribe()
+        {
+            m1 = true;
+            m2 = true;
+            m3 = true;
+            m4 = true;
+            m5 = true;
+            m6 = true;
+            m7 = true;
+            m8 = true;
+            m9 = true;
+            m10 = true;
+            m11 = true;
+            m12 = true;
+        }
+
+        public TDateSubscribe(WarikakeWebContext context)
+        {
+            _context = context;
+        }
+
         public int Id { get; set; }
         public int? status { get; set; }
         public int SubscribeId { get; set; }
@@ -125,21 +149,7 @@ namespace WarikakeWeb.Models
         public DateTime? UpdatedDate { get; set; }
         public String? UpdateUser { get; set; }
         public String? UpdatePg { get; set; }
-        public TDateSubscribe()
-        {
-            m1 = true;
-            m2 = true;
-            m3 = true;
-            m4 = true;
-            m5 = true;
-            m6 = true;
-            m7 = true;
-            m8 = true;
-            m9 = true;
-            m10 = true;
-            m11 = true;
-            m12 = true;
-        }
+
         public List<int> getMonthList()
         {
             List<int> monthList = new List<int>();
@@ -234,6 +244,12 @@ namespace WarikakeWeb.Models
             if (this.d30) dayList.Add(30);
             if (this.d31) dayList.Add(31);
             return dayList;
+        }
+
+        public TDateSubscribe GetDateSubscribe(int SubscribeId)
+        {
+            TDateSubscribe mwd = _context.TDateSubscribe.Where(d => d.SubscribeId == SubscribeId).FirstOrDefault();
+            return mwd;
         }
     }
 }

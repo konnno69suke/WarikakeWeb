@@ -92,6 +92,7 @@ namespace WarikakeWeb.Controllers
                 mGenre.UpdatedDate = currDate;
                 mGenre.UpdateUser = UserId.ToString();
                 mGenre.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MGenre:{mGenre.ToString()}");
                 _context.Add(mGenre);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
@@ -163,6 +164,7 @@ namespace WarikakeWeb.Controllers
                     existingGenre.UpdatedDate = currDate;
                     existingGenre.UpdateUser = UserId.ToString();
                     existingGenre.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MGenre:{existingGenre.ToString()}");
                     _context.Update(existingGenre);
                     _context.SaveChanges();
                 }
@@ -229,6 +231,7 @@ namespace WarikakeWeb.Controllers
                 mGenre.UpdatedDate = currDate;
                 mGenre.UpdateUser = UserId.ToString();
                 mGenre.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MGenre:{mGenre.ToString()}");
                 _context.Update(mGenre);
                 _context.SaveChanges();
             }

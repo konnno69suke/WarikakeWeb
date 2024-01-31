@@ -1,4 +1,6 @@
-﻿namespace WarikakeWeb.Models
+﻿using WarikakeWeb.Data;
+
+namespace WarikakeWeb.Models
 {
     public class TSubscribe
     {
