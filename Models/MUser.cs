@@ -1,11 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
 
 namespace WarikakeWeb.Models
 {
     public class MUser
     {
+        private WarikakeWebContext _context;
+
+        public MUser()
+        {
+
+        }
+
+        public MUser(WarikakeWebContext context)
+        {
+            _context = context;
+        }
+
         public int Id { get; set; }
         public int? status { get; set; }
         public int UserId { get; set; }
@@ -21,21 +34,10 @@ namespace WarikakeWeb.Models
         public String? UpdateUser { get; set; }
         public String? UpdatePg { get; set; }
 
-        private readonly WarikakeWebContext _context;
-
-        public MUser()
-        {
-
-        }
-
-        public MUser(WarikakeWebContext context)
-        {
-            _context = context;
-
-        }
-        // グループのユーザー一覧を取得
+        // 指定したグループのユーザー一覧を取得
         public List<MUser> GetUsers(int GroupId)
         {
+            Serilog.Log.Information($"SQL param: {GroupId}");
             List<MUser> users = _context.Database.SqlQuery<MUser>(
                $@"select mu.*
                     from muser mu 
@@ -44,6 +46,13 @@ namespace WarikakeWeb.Models
                     and mu.status = 1 and mm.status = 1
                     order by mu.UserId").ToList();
             return users;
+        }
+
+
+        public String ToString()
+        {
+            FormattableString fs = $"MMember :{Id}, {status}, {UserId}, {UserName}, ******, {Email}";
+            return fs.ToString();
         }
     }
 

@@ -38,9 +38,11 @@ namespace WarikakeWeb.Controllers
             List<MUser> users = null;
             if (mGroup.UserId == UserId)
             {
+                Serilog.Log.Information($"SQL param: {GroupId}");
                 users = _context.Database.SqlQuery<MUser>($@"
                         select mu.* 
-                        from muser mu inner join mmember mm on mu.userid = mm.userid 
+                        from muser mu 
+                        inner join mmember mm on mu.userid = mm.userid 
                         inner join mgroup mg on mm.groupid = mg.groupid
                         where mg.groupid = {GroupId}
                         and mu.status = 1 and mm.status = 1 and mg.status = 1
@@ -155,6 +157,7 @@ namespace WarikakeWeb.Controllers
                 mUser.UpdatedDate = dateTime;
                 mUser.UpdateUser = UserId.ToString();
                 mUser.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
                 _context.Add(mUser);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
@@ -247,6 +250,7 @@ namespace WarikakeWeb.Controllers
                     existingUser.UpdatedDate = currDate;
                     existingUser.UpdateUser = UserId.ToString();
                     existingUser.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MUser: {existingUser.ToString()}");
                     _context.Update(existingUser);
                     _context.SaveChanges();
                 }
@@ -328,6 +332,8 @@ namespace WarikakeWeb.Controllers
                     mUser.UpdatedDate = currTime;
                     mUser.UpdateUser = UserId.ToString();
                     mUser.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
+                    _context.MUser.Update(mUser);
                     _context.SaveChanges();
                 }
                 catch (Exception ex)

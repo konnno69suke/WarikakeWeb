@@ -12,5 +12,11 @@
         public DateTime? UpdatedDate { get; set; }
         public String? UpdateUser { get; set; }
         public String? UpdatePg { get; set; }
+
+        public String ToString()
+        {
+            FormattableString fs = $"MMember :{Id}, {status}, {GroupId}, {UserId}";
+            return fs.ToString();
+        }
     }
 }
