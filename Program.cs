@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using WarikakeWeb.Data;
+using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WarikakeWebContext>(options =>
@@ -22,11 +23,9 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// logging
-builder.Host.UseSerilog((hostContext, services, configuration) => 
-{
-    configuration.WriteTo.File(path: $"logs/app_.log", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
-});
+// serilogを使用する宣言
+builder.Host.UseSerilog();
+
 
 var app = builder.Build();
 
@@ -57,5 +56,10 @@ app.UseSession();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// serilogの設定は設定ファイルを参照する宣言
+Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(app.Configuration).CreateLogger();
+
+
 
 app.Run();

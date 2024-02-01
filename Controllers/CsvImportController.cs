@@ -58,6 +58,13 @@ namespace WarikakeWeb.Controllers
                 if (fileExtension == ".csv")
                 {
                     DateTime currDate = DateTime.Now;
+
+                    string parentPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+                    DirectoryInfo parentDir = new DirectoryInfo(parentPath);
+                    if (!parentDir.Exists)
+                    {
+                        parentDir.Create();
+                    }
                     string filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", fileName + currDate.ToString("_yyyyMMddHHmmss"));
                     
                     int impCnt = 0;
