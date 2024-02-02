@@ -1,25 +1,13 @@
-﻿using Humanizer.Localisation;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Globalization;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Transactions;
 using WarikakeWeb.Data;
-using WarikakeWeb.Logic;
 //using WarikakeWeb.Migrations;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class WarikanController : Controller
     {
         private readonly WarikakeWebContext _context;

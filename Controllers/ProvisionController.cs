@@ -1,18 +1,12 @@
-﻿using Humanizer.Localisation;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class ProvisionController : Controller
     {
         private readonly WarikakeWebContext _context;

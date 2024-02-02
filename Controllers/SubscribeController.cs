@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class SubscribeController : Controller
     {
         private readonly WarikakeWebContext _context;

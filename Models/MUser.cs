@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
 
 namespace WarikakeWeb.Models
@@ -51,7 +50,7 @@ namespace WarikakeWeb.Models
 
         public String ToString()
         {
-            FormattableString fs = $"MMember :{Id}, {status}, {UserId}, {UserName}, ******, {Email}";
+            FormattableString fs = $"MSalt :{Id}, {status}, {UserId}, {UserName}, ******, {Email}";
             return fs.ToString();
         }
     }

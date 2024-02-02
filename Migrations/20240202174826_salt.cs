@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WarikakeWeb.Migrations
 {
     /// <inheritdoc />
-    public partial class nextdb : Migration
+    public partial class salt : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -118,7 +118,28 @@ namespace WarikakeWeb.Migrations
                 {
                     table.PrimaryKey("PK_MMember", x => x.Id);
                 });
-
+            */
+            migrationBuilder.CreateTable(
+                name: "MSalt",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    status = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    salt = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreateUser = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatePg = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdateUser = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UpdatePg = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MSalt", x => x.Id);
+                });
+            /*
             migrationBuilder.CreateTable(
                 name: "MUser",
                 columns: table => new
@@ -387,12 +408,31 @@ namespace WarikakeWeb.Migrations
                 {
                     table.PrimaryKey("PK_TSubscribe", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TCost_GroupId_status",
+                table: "TCost",
+                columns: new[] { "GroupId", "status" })
+                .Annotation("SqlServer:Clustered", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TPay_CostId_status",
+                table: "TPay",
+                columns: new[] { "CostId", "status" })
+                .Annotation("SqlServer:Clustered", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TRepay_CostId_status",
+                table: "TRepay",
+                columns: new[] { "CostId", "status" })
+                .Annotation("SqlServer:Clustered", false);
             */
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.DropTable(
                 name: "CsvMigration");
 
@@ -404,7 +444,10 @@ namespace WarikakeWeb.Migrations
 
             migrationBuilder.DropTable(
                 name: "MMember");
-
+            */
+            migrationBuilder.DropTable(
+                name: "MSalt");
+            /*
             migrationBuilder.DropTable(
                 name: "MUser");
 
@@ -437,6 +480,7 @@ namespace WarikakeWeb.Migrations
 
             migrationBuilder.DropSequence(
                 name: "SubscribeIdSeq");
+            */
         }
     }
 }

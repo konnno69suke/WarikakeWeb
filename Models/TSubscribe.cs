@@ -1,5 +1,4 @@
-﻿using WarikakeWeb.Data;
-
+﻿
 namespace WarikakeWeb.Models
 {
     public class TSubscribe

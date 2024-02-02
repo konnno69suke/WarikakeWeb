@@ -1,10 +1,8 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using WarikakeWeb.Data;
-using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WarikakeWebContext>(options =>
@@ -26,6 +24,18 @@ builder.Services.AddSession(options =>
 // serilogを使用する宣言
 builder.Host.UseSerilog();
 
+// cookie認証を使用する
+builder.Services.Configure<CookiePolicyOptions>(options => {
+    options.CheckConsentNeeded = context => !context.User.Identity.IsAuthenticated;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
+    options.HttpOnly = HttpOnlyPolicy.Always;
+});
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+{
+    options.LoginPath = "/Home/Login";
+    options.AccessDeniedPath = "/Home/Denied";
+});
 
 var app = builder.Build();
 
@@ -38,7 +48,7 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Home/Denied");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -48,6 +58,9 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// cookie認証
+app.UseAuthentication();
 
 app.UseAuthorization();
 
@@ -59,7 +72,5 @@ app.MapControllerRoute(
 
 // serilogの設定は設定ファイルを参照する宣言
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(app.Configuration).CreateLogger();
-
-
 
 app.Run();
