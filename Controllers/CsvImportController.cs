@@ -1,17 +1,14 @@
-﻿
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic.FileIO;
-using System.IO;
-using System.Runtime.Intrinsics.X86;
 using WarikakeWeb.Data;
 using WarikakeWeb.Logic;
-//using WarikakeWeb.Migrations;
 using WarikakeWeb.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class CsvImportController : Controller
     {
         private readonly WarikakeWebContext _context;

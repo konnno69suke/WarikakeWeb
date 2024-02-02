@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
+using System.Security.Policy;
+using System.Xml.Linq;
 using WarikakeWeb.Data;
-//using WarikakeWeb.Migrations;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class MUsersController : Controller
     {
         private readonly WarikakeWebContext _context;
@@ -143,22 +143,67 @@ namespace WarikakeWeb.Controllers
                 // ユーザー登録
                 DateTime dateTime = DateTime.Now;
                 string currPg = "MUsersInsert";
+                int newUserId = getNextUserId();
 
-                MUser mUser = new MUser();
-                mUser.UserId = getNextUserId();
-                mUser.status = 1;
-                mUser.UserName = mUserDisp.UserName;
-                mUser.Email = mUserDisp.Email;
-                mUser.Password = mUserDisp.Password;
-                mUser.StartDate = dateTime.Date;
-                mUser.CreatedDate = dateTime;
-                mUser.CreateUser = UserId.ToString();
-                mUser.CreatePg = currPg;
-                mUser.UpdatedDate = dateTime;
-                mUser.UpdateUser = UserId.ToString();
-                mUser.UpdatePg = currPg;
-                Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
-                _context.Add(mUser);
+                // パスワードハッシュ対応有無で処理分岐
+                IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+                string HashAndSalt = configuration["HashAndSalt"];
+                if (HashAndSalt.Equals("use")) {
+                    // パスワードをハッシュ化
+                    byte[] salt = new byte[128 / 8];
+                    using var rng = RandomNumberGenerator.Create();
+                    rng.GetBytes(salt);
+                    string hash = getHasshedPassword(mUserDisp.Password, salt);
+
+                    MUser mUser = new MUser();
+                    mUser.UserId = newUserId;
+                    mUser.status = 1;
+                    mUser.UserName = mUserDisp.UserName;
+                    mUser.Email = mUserDisp.Email;
+                    mUser.Password = hash;
+                    mUser.StartDate = dateTime.Date;
+                    mUser.CreatedDate = dateTime;
+                    mUser.CreateUser = UserId.ToString();
+                    mUser.CreatePg = currPg;
+                    mUser.UpdatedDate = dateTime;
+                    mUser.UpdateUser = UserId.ToString();
+                    mUser.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
+                    _context.Add(mUser);
+
+                    MSalt mSalt = new MSalt();
+                    mSalt.status = 1;
+                    mSalt.UserId = newUserId;
+                    mSalt.salt = salt;
+                    mSalt.CreatedDate = dateTime;
+                    mSalt.CreateUser = UserId.ToString();
+                    mSalt.CreatePg = currPg;
+                    mSalt.UpdatedDate = dateTime;
+                    mSalt.UpdateUser = UserId.ToString();
+                    mSalt.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MSalt: {mSalt.ToString()}");
+                    _context.Add(mSalt);
+                }
+                else
+                {
+                    // パスワードをハッシュ化しない
+                    MUser mUser = new MUser();
+                    mUser.UserId = newUserId;
+                    mUser.status = 1;
+                    mUser.UserName = mUserDisp.UserName;
+                    mUser.Email = mUserDisp.Email;
+                    mUser.Password = mUserDisp.Password;
+                    mUser.StartDate = dateTime.Date;
+                    mUser.CreatedDate = dateTime;
+                    mUser.CreateUser = UserId.ToString();
+                    mUser.CreatePg = currPg;
+                    mUser.UpdatedDate = dateTime;
+                    mUser.UpdateUser = UserId.ToString();
+                    mUser.UpdatePg = currPg;
+                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
+                    _context.Add(mUser);
+                }
+
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
@@ -235,14 +280,25 @@ namespace WarikakeWeb.Controllers
 
                 try
                 {
-                    string password = mUserDisp.Password;
-                    if (!mUserDisp.NewPassword.IsNullOrEmpty())
-                    {
-                        password = mUserDisp.NewPassword;
-                    }
                     DateTime currDate = DateTime.Now;
                     string currPg = "MUsersUpdate";
 
+                    // パスワードハッシュ対応有無で処理分岐
+                    IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+                    string HashAndSalt = configuration["HashAndSalt"];
+                    string password = null;
+                    if (HashAndSalt.Equals("use"))
+                    {
+                        // パスワードをハッシュ化
+                        if (!mUserDisp.NewPassword.IsNullOrEmpty())
+                        {
+                            password = getHasshedPassword(mUserDisp.NewPassword, getSalt(mUserDisp.Id));
+                        }
+                    }
+                    else
+                    {
+                        password = mUserDisp.Password;
+                    }
                     MUser existingUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
                     existingUser.UserName = mUserDisp.UserName;
                     existingUser.Password = password;
@@ -334,6 +390,21 @@ namespace WarikakeWeb.Controllers
                     mUser.UpdatePg = currPg;
                     Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
                     _context.MUser.Update(mUser);
+
+                    // パスワードハッシュ対応有の場合、ソルトテーブルもステータス更新
+                    IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+                    string HashAndSalt = configuration["HashAndSalt"];
+                    if (HashAndSalt.Equals("use"))
+                    {
+                        MSalt mSalt = _context.MSalt.Where(s => s.UserId == mUser.UserId && s.status == 1).FirstOrDefault();
+                        mSalt.status = (int)statusEnum.削除;
+                        mSalt.UpdatedDate = currTime;
+                        mSalt.UpdateUser = UserId.ToString();
+                        mSalt.UpdatePg = currPg;
+                        Serilog.Log.Information($"SQL param: MSalt: {mSalt.ToString()}");
+                        _context.MSalt.Update(mSalt);
+                    }
+
                     _context.SaveChanges();
                 }
                 catch (Exception ex)
@@ -362,7 +433,8 @@ namespace WarikakeWeb.Controllers
                 ModelState.AddModelError(nameof(MUserDisp.Password), "パスワードと確認用は一致させてください");
                 retInt++;
             }
-            Boolean useChk = _context.MUser.Any(u => u.Email.Equals(mUserDisp.Email) && u.Password.Equals(mUserDisp.Password) && u.status == 1 && u.Id != mUserDisp.Id);
+            string hasshedPassword = getHasshedPassword(mUserDisp.Password, getSalt(mUserDisp.Id));
+            Boolean useChk = _context.MUser.Any(u => u.Email.Equals(mUserDisp.Email) && u.Password.Equals(hasshedPassword) && u.status == 1 && u.Id != mUserDisp.Id);
             if (useChk)
             {
                 ModelState.AddModelError(nameof(MUserDisp.Email), "既に使用されているIDです");
@@ -404,12 +476,61 @@ namespace WarikakeWeb.Controllers
         private int PersonCheck(MUserDisp mUserDisp)
         {
             int retInt = 0;
-            MUser user = _context.MUser.FirstOrDefault(u => u.Id == mUserDisp.Id && u.status == 1);
-            if (!user.Password.Equals(mUserDisp.Password) || !user.Password.Equals(mUserDisp.PasswordAssert))
+            MUser user = _context.MUser.Where(u => u.Id == mUserDisp.Id && u.status == 1).FirstOrDefault();
+            string password = getHasshedPassword(mUserDisp.Password, getSalt(user.Id));
+            string passwordAssert = getHasshedPassword(mUserDisp.PasswordAssert, getSalt(user.Id));
+            if (!user.Password.Equals(password) || !user.Password.Equals(passwordAssert))
             {
                 retInt++;
             }
             return retInt;
         }
+
+        private byte[] getSalt(int id)
+        {
+            byte[] salt = null;
+            // パスワードハッシュ対応有無で処理分岐
+            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+            string HashAndSalt = configuration["HashAndSalt"];
+            if (!HashAndSalt.Equals("use"))
+            {
+                return salt;
+            }
+            try
+            {
+                MUser mUser = _context.MUser.Where(u => u.Id == id).FirstOrDefault();
+                MSalt mSalt = _context.MSalt.Where(s => s.UserId == mUser.UserId).FirstOrDefault();
+                salt = mSalt.salt;
+            }
+            catch (Exception)
+            {
+                return salt;
+            }
+
+            return salt;
+        }
+
+        private string getHasshedPassword(string passwordStr, byte[] salt)
+        {
+            // パスワードハッシュ対応有無で処理分岐
+            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+            string HashAndSalt = configuration["HashAndSalt"];
+            if (!HashAndSalt.Equals("use"))
+            {
+                return passwordStr;
+            }
+            if (salt == null)
+            {
+                return passwordStr;
+            }
+            byte[] hash = KeyDerivation.Pbkdf2(
+              passwordStr,
+              salt,
+              prf: KeyDerivationPrf.HMACSHA256,
+              iterationCount: 10000,  // 反復回数
+              numBytesRequested: 256 / 8);
+            return System.Text.Encoding.UTF8.GetString(hash);
+        }
+
     }
 }

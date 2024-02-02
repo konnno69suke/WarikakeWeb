@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Data
@@ -18,6 +14,7 @@ namespace WarikakeWeb.Data
         public DbSet<WarikakeWeb.Models.MGroup> MGroup { get; set; } = default!;
         public DbSet<WarikakeWeb.Models.MMember> MMember { get; set; } = default!;
         public DbSet<WarikakeWeb.Models.MUser> MUser { get; set; } = default!;
+        public DbSet<WarikakeWeb.Models.MSalt> MSalt { get; set; }
         public DbSet<WarikakeWeb.Models.TCost> TCost { get; set; } = default!;
         public DbSet<WarikakeWeb.Models.TPay> TPay { get; set; } = default!;
         public DbSet<WarikakeWeb.Models.TRepay> TRepay { get; set; } = default!;

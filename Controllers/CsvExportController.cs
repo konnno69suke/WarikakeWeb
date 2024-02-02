@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
 namespace WarikakeWeb.Controllers
 {
+    [Authorize]
     public class CsvExportController : Controller
     {
 

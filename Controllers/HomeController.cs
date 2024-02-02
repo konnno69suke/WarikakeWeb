@@ -1,9 +1,15 @@
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Xml.Linq;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
@@ -51,39 +57,83 @@ namespace WarikakeWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Login(Login login)
+        public async Task<ActionResult> Login(Login login)
         {
-            if(ModelState.IsValid)
+            // 一般入力チェック
+            if (!ModelState.IsValid)
             {
-                MUser user = _context.MUser.FirstOrDefault(u => u.Email == login.EMail && u.Password == login.Password);
-                if (user != null)
+                // エラーメッセージを表示する
+                ModelState.AddModelError("", "ユーザー名またはパスワードが間違っています。");
+                return View();
+            }
+
+
+            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+            string HashAndSalt = configuration["HashAndSalt"];
+            string password = null;
+            if (HashAndSalt.Equals("use"))
+            {
+                // 存在チェック
+                byte[] salt = null;
+                try
                 {
-                    // 認証処理を行うtodo
+                    MUser mUser = _context.MUser.Where(u => u.Email == login.EMail).FirstOrDefault();
+                    MSalt mSalt = _context.MSalt.Where(s => s.UserId == mUser.UserId).FirstOrDefault();
+                    salt = mSalt.salt;
+                }
+                catch (Exception ex)
+                {
+                    // エラーメッセージを表示する
+                    ModelState.AddModelError("", "ユーザー名またはパスワードが間違っています。");
+                    return View();
+                }
+                password = getHasshedPassword(login.Password, salt);
+            }
+            else
+            {
+                password = login.Password;
+            }
+            MUser user = _context.MUser.Where(u => u.Email == login.EMail && u.Password == password && u.status == 1).FirstOrDefault();
 
-                    HttpContext.Session.SetInt32("UserId", user.UserId);
+            if (user == null)
+            {
+                // エラーメッセージを表示する
+                ModelState.AddModelError("", "ユーザー名またはパスワードが間違っています。");
+                return View();
+            }
 
-                    // 単一グループに属している場合はグループ選択画面での処理を先回りして行い、グループ選択画面を飛ばす
-                    List<MMember> members = _context.MMember.Where(m => m.UserId == user.UserId && m.status == 1).ToList();
-                    if (members.Count == 1)
-                    {
-                        foreach (MMember member in members)
-                        {
-                            HttpContext.Session.SetInt32("GroupId", member.GroupId);
-                            MGroup group = _context.MGroup.FirstOrDefault(m => m.GroupId == member.GroupId);
-                            HttpContext.Session.SetString("GroupName", group.GroupName);
+            // 認証処理を行う
+            Claim[] claims ={new Claim(ClaimTypes.NameIdentifier, login.EMail), new Claim(ClaimTypes.Name, login.EMail)};
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                new AuthenticationProperties
+                {
+                    // Cookie をブラウザー セッション間で永続化するか？（ブラウザを閉じてもログアウトしないかどうか）
+                    IsPersistent = true
+                }); ;
 
-                            Serilog.Log.Information($"GroupId:{member.GroupId}, UserId:{user.UserId}");
-                            return RedirectToAction("Index");
-                        }
-                    }
-                    // 複数グループに属している場合はグループ選択画面へ遷移する
-                    Serilog.Log.Information($"GroupId: notyet, UserId:{user.UserId}");
-                    return RedirectToAction("GroupSet");
+            // セッションにユーザーIDを格納
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+
+            // 単一グループに属している場合はグループ選択画面での処理を先回りして行い、グループ選択画面を飛ばす
+            List<MMember> members = _context.MMember.Where(m => m.UserId == user.UserId && m.status == 1).ToList();
+            if (members.Count == 1)
+            {
+                foreach (MMember member in members)
+                {
+                    HttpContext.Session.SetInt32("GroupId", member.GroupId);
+                    MGroup group = _context.MGroup.FirstOrDefault(m => m.GroupId == member.GroupId);
+                    HttpContext.Session.SetString("GroupName", group.GroupName);
+
+                    Serilog.Log.Information($"GroupId:{member.GroupId}, UserId:{user.UserId}");
+                    return RedirectToAction("Index");
                 }
             }
-            // エラーメッセージを表示する
-            ModelState.AddModelError("", "ユーザー名またはパスワードが間違っています。");
-            return View();
+            // 複数グループに属している場合はグループ選択画面へ遷移する
+            Serilog.Log.Information($"GroupId: notyet, UserId:{user.UserId}");
+            return RedirectToAction("GroupSet");
         }
 
         public ActionResult GroupSet()
@@ -136,7 +186,7 @@ namespace WarikakeWeb.Controllers
                     return RedirectToAction("Index");
                 }
             }
-            ModelState.AddModelError("","グループが取得できません");
+            ModelState.AddModelError("", "グループが取得できません");
             return View();
         }
 
@@ -146,11 +196,49 @@ namespace WarikakeWeb.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public IActionResult Logout()
+        public ActionResult Logout()
         {
             HttpContext.Session.Clear();
             Serilog.Log.Information($"GroupId: logout, UserId: logout");
+
+            // ログアウト処理
+            HttpContext.SignOutAsync();
+
             return RedirectToAction("Login");
+        }
+
+        public ActionResult Denied()
+        {
+
+            return View();
+        }
+
+        private byte[] getSalt(int id)
+        {
+            byte[] salt = null;
+            try
+            {
+                salt = _context.Database.SqlQuery<byte[]>(@$"
+                        select ms.salt from msalt ms 
+                        inner join muser mu on ms.userid = mu.userid
+                        where ms.status = 1 and mu.status = 1 and mu.id = {id}").FirstOrDefault();
+            }
+            catch (SqlException)
+            {
+                return salt;
+            }
+
+            return salt;
+        }
+        private string getHasshedPassword(string passwordStr, byte[] salt)
+        {
+            byte[] hash = KeyDerivation.Pbkdf2(
+              passwordStr,
+              salt,
+              prf: KeyDerivationPrf.HMACSHA256,
+              iterationCount: 10000,  // 反復回数
+              numBytesRequested: 256 / 8);
+            return System.Text.Encoding.UTF8.GetString(hash);
         }
     }
 }

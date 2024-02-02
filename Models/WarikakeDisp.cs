@@ -1,18 +1,9 @@
-﻿using Humanizer;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.VisualStudio.TextTemplating;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using WarikakeWeb.Data;
 using WarikakeWeb.Logic;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace WarikakeWeb.Models
 {
