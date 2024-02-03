@@ -222,7 +222,7 @@ namespace WarikakeWeb.Controllers
                 // 本人チェック
                 if (0 < PersonCheck(mGroupDisp, (int)UserId))
                 {
-                    ViewBag.Message = "本人確認が取れません";
+                    ModelState.AddModelError(nameof(MGroupDisp.groupName), "本人確認が取れません");
                     return View(mGroupDisp);
                 }
 
@@ -298,7 +298,7 @@ namespace WarikakeWeb.Controllers
             // 本人チェック
             if (0 < PersonCheck(mGroupDisp, (int)UserId))
             {
-                ViewBag.Message = "本人確認が取れません";
+                ModelState.AddModelError(nameof(MGroupDisp.Id), "本人確認が取れません");
                 return View(mGroupDisp);
             }
 

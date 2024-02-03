@@ -68,6 +68,7 @@ namespace WarikakeWeb.Controllers
             }
 
 
+            // パスワードのハッシュ化とソルト使用
             IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
             string HashAndSalt = configuration["HashAndSalt"];
             string password = null;
@@ -91,6 +92,7 @@ namespace WarikakeWeb.Controllers
             }
             else
             {
+                // パスワードハッシュを行わない場合
                 password = login.Password;
             }
             MUser user = _context.MUser.Where(u => u.Email == login.EMail && u.Password == password && u.status == 1).FirstOrDefault();
@@ -176,18 +178,22 @@ namespace WarikakeWeb.Controllers
 
             if (ModelState.IsValid)
             {
-                MGroup group = _context.MGroup.FirstOrDefault(g => g.GroupId == homeDisp.GroupId);
-                if (group != null)
-                {
-                    HttpContext.Session.SetInt32("GroupId", group.GroupId);
-                    HttpContext.Session.SetString("GroupName", group.GroupName);
-
-                    Serilog.Log.Information($"GroupId:{group.GroupId}, UserId:{UserId}");
-                    return RedirectToAction("Index");
-                }
+                ModelState.AddModelError("", "グループが取得できません");
+                return View();
             }
-            ModelState.AddModelError("", "グループが取得できません");
-            return View();
+
+            MGroup group = _context.MGroup.FirstOrDefault(g => g.GroupId == homeDisp.GroupId);
+            if (group != null)
+            {
+                return View();
+            }
+
+            // グループをセット
+            HttpContext.Session.SetInt32("GroupId", group.GroupId);
+            HttpContext.Session.SetString("GroupName", group.GroupName);
+
+            Serilog.Log.Information($"GroupId:{group.GroupId}, UserId:{UserId}");
+            return RedirectToAction("Index");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -213,6 +219,7 @@ namespace WarikakeWeb.Controllers
             return View();
         }
 
+        // ソルトを取得。取得できない場合はnull
         private byte[] getSalt(int id)
         {
             byte[] salt = null;
@@ -230,6 +237,8 @@ namespace WarikakeWeb.Controllers
 
             return salt;
         }
+
+        // ハッシュ化したパスワードを取得
         private string getHasshedPassword(string passwordStr, byte[] salt)
         {
             byte[] hash = KeyDerivation.Pbkdf2(
