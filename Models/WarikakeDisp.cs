@@ -770,6 +770,8 @@ namespace WarikakeWeb.Models
                     day++;
                 }
             }
+            chartDatasets.Add(chartDataset);
+
             return chartDatasets;
         }
 

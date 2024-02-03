@@ -1,12 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using System.Security.Policy;
-using System.Xml.Linq;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
 
@@ -34,10 +31,12 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            // 検索処理
             MGroup mGroup = _context.MGroup.Where(g => g.GroupId == GroupId && g.status == 1).FirstOrDefault();
             List<MUser> users = null;
             if (mGroup.UserId == UserId)
             {
+                // リーダーの場合
                 Serilog.Log.Information($"SQL param: {GroupId}");
                 users = _context.Database.SqlQuery<MUser>($@"
                         select mu.* 
@@ -50,11 +49,12 @@ namespace WarikakeWeb.Controllers
             }
             else
             {
+                // メンバーの場合
                 users = _context.MUser.Where(u =>u.status == 1 && u.UserId == UserId).ToList();
             }
 
+            // 画面表示処理
             List<MUserDisp> disps = new List<MUserDisp>();
-            
             foreach(MUser user in users)
             {
                 MUserDisp disp = new MUserDisp();
@@ -68,7 +68,7 @@ namespace WarikakeWeb.Controllers
         }
 
         // GET: MUsers/Details/5
-        public ActionResult Details(int? id)
+        public ActionResult Details(int id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -79,16 +79,13 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var mUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
+            // 検索処理
+            var mUser = _context.MUser.Where(u => u.Id == id && u.status == 1).FirstOrDefault();
             if (mUser == null)
             {
                 return NotFound();
             }
+            // 画面表示処理
             MUserDisp mUserDisp = new MUserDisp();
             mUserDisp.Id = mUser.Id;
             mUserDisp.UserName = mUser.UserName;
@@ -110,6 +107,7 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            // 画面表示処理
             MUserDisp mUserDisp = new MUserDisp();
             mUserDisp.StartDate = DateTime.Now;
             return View(mUserDisp);
@@ -131,15 +129,20 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            // 一般入力チェック
             if (ModelState.IsValid)
             {
+                return View(mUserDisp);
+            }
 
-                // 業務入力チェック
-                if (0 < ValidateLogic(mUserDisp))
-                {
-                    return View(mUserDisp);
-                }
+            // 業務入力チェック
+            if (0 < ValidateLogic(mUserDisp))
+            {
+                return View(mUserDisp);
+            }
 
+            try 
+            {
                 // ユーザー登録
                 DateTime dateTime = DateTime.Now;
                 string currPg = "MUsersInsert";
@@ -148,7 +151,8 @@ namespace WarikakeWeb.Controllers
                 // パスワードハッシュ対応有無で処理分岐
                 IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
                 string HashAndSalt = configuration["HashAndSalt"];
-                if (HashAndSalt.Equals("use")) {
+                if (HashAndSalt.Equals("use"))
+                {
                     // パスワードをハッシュ化
                     byte[] salt = new byte[128 / 8];
                     using var rng = RandomNumberGenerator.Create();
@@ -207,7 +211,10 @@ namespace WarikakeWeb.Controllers
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-            return View(mUserDisp);
+            catch (Exception ex)
+            {
+                return View(mUserDisp);
+            }
         }
 
         // GET: MUsers/Edit/5
@@ -227,7 +234,7 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
-            // 指定ユーザーの表示情報を取得
+            // 画面表示処理
             MUserDisp mUserDisp = DispLogic((int)id);
             if (mUserDisp == null)
             {
@@ -242,7 +249,7 @@ namespace WarikakeWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, [Bind("Id,UserName,Password,PasswordAssert,NewPassword,Email")] MUserDisp mUserDisp)
+        public ActionResult Edit(int id, [Bind("Id,UserName,Password,PasswordAssert,NewPassword,Email,StartDate")] MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -258,65 +265,65 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // 一般入力チェック
+            if (!ModelState.IsValid)
             {
-                // 本人チェック
-                if (0 < PersonCheck(mUserDisp))
-                {
-                    ViewBag.Message = "本人確認が取れません";
-                    return View(mUserDisp);
-                }
-
-                // 業務入力チェック
-                if (0 < ValidateLogic(mUserDisp))
-                {
-                    return View(mUserDisp);
-                }
-                // パスワードチェック
-                if (0 < PassWordCheck(mUserDisp))
-                {
-                    return View(mUserDisp);
-                }
-
-                try
-                {
-                    DateTime currDate = DateTime.Now;
-                    string currPg = "MUsersUpdate";
-
-                    // パスワードハッシュ対応有無で処理分岐
-                    IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-                    string HashAndSalt = configuration["HashAndSalt"];
-                    string password = null;
-                    if (HashAndSalt.Equals("use"))
-                    {
-                        // パスワードをハッシュ化
-                        if (!mUserDisp.NewPassword.IsNullOrEmpty())
-                        {
-                            password = getHasshedPassword(mUserDisp.NewPassword, getSalt(mUserDisp.Id));
-                        }
-                    }
-                    else
-                    {
-                        password = mUserDisp.Password;
-                    }
-                    MUser existingUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
-                    existingUser.UserName = mUserDisp.UserName;
-                    existingUser.Password = password;
-                    existingUser.Email = mUserDisp.Email;
-                    existingUser.UpdatedDate = currDate;
-                    existingUser.UpdateUser = UserId.ToString();
-                    existingUser.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MUser: {existingUser.ToString()}");
-                    _context.Update(existingUser);
-                    _context.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                    return View(mUserDisp);
-                }
-                return RedirectToAction(nameof(Index));
+                return View(mUserDisp);
             }
-            return View(mUserDisp);
+            // 本人チェック
+            if (0 < PersonCheck(mUserDisp))
+            {
+                return View(mUserDisp);
+            }
+            // 業務入力チェック
+            if (0 < ValidateLogic(mUserDisp))
+            {
+                return View(mUserDisp);
+            }
+            // パスワードチェック
+            if (0 < PassWordCheck(mUserDisp))
+            {
+                return View(mUserDisp);
+            }
+
+            try
+            {
+                DateTime currDate = DateTime.Now;
+                string currPg = "MUsersUpdate";
+
+                // パスワードハッシュ対応有無で処理分岐
+                IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+                string HashAndSalt = configuration["HashAndSalt"];
+                string password = null;
+                if (HashAndSalt.Equals("use"))
+                {
+                    // パスワードをハッシュ化
+                    if (!mUserDisp.NewPassword.IsNullOrEmpty())
+                    {
+                        password = getHasshedPassword(mUserDisp.NewPassword, getSalt(mUserDisp.Id));
+                    }
+                }
+                else
+                {
+                    password = mUserDisp.Password;
+                }
+                MUser existingUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
+                existingUser.UserName = mUserDisp.UserName;
+                existingUser.Password = password;
+                existingUser.Email = mUserDisp.Email;
+                existingUser.UpdatedDate = currDate;
+                existingUser.UpdateUser = UserId.ToString();
+                existingUser.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MUser: {existingUser.ToString()}");
+                _context.Update(existingUser);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return View(mUserDisp);
+            }
+            return RedirectToAction(nameof(Index));
+
         }
 
         // GET: MUsers/Delete/5
@@ -367,7 +374,6 @@ namespace WarikakeWeb.Controllers
             // 本人チェック
             if (0 < PersonCheck(mUserDisp))
             {
-                ViewBag.Message = "本人確認が取れません";
                 return View(mUserDisp);
             }
             
@@ -450,7 +456,7 @@ namespace WarikakeWeb.Controllers
             {
                 if (mUserDisp.NewPassword.Equals(mUserDisp.Password))
                 {
-                    ModelState.AddModelError(nameof(MUserDisp.NewPassword), "パスワードを変更する際は以前のものから変えてください");
+                    ModelState.AddModelError(nameof(MUserDisp.NewPassword), "パスワード変更は以前のパスワードから変えてください");
                     retInt++;
                 }
             }
@@ -481,6 +487,7 @@ namespace WarikakeWeb.Controllers
             string passwordAssert = getHasshedPassword(mUserDisp.PasswordAssert, getSalt(user.Id));
             if (!user.Password.Equals(password) || !user.Password.Equals(passwordAssert))
             {
+                ModelState.AddModelError(nameof(MUserDisp.Password), "本人確認が取れません");
                 retInt++;
             }
             return retInt;

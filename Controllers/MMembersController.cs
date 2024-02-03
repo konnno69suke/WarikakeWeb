@@ -84,7 +84,8 @@ namespace WarikakeWeb.Controllers
             // 本人チェック
             if (0 < InsPersonCheck(mMemberDisp, (int)UserId))
             {
-                ViewBag.Message = "本人確認が取れません";
+                ModelState.AddModelError(nameof(MMemberDisp.gid), "本人確認が取れません");
+
                 return View(mMemberDisp);
             }
 
@@ -207,7 +208,7 @@ namespace WarikakeWeb.Controllers
             // 重複する組み合わせでは登録できない
             if (_context.MMember.Any(m => m.GroupId == mMemberDisp.gid && m.UserId == mMemberDisp.mid && m.status == 1))
             {
-                ViewBag.Message = "the user already joining in this group.";
+                ModelState.AddModelError(nameof(MMemberDisp.mid), "既にグループに入っているユーザーです");
                 retInt++;
             }
             return retInt;
@@ -237,14 +238,15 @@ namespace WarikakeWeb.Controllers
                 and mg.status = 1 and mm.status = 1").Any();
             if (!res)
             {
-                ViewBag.Message = "you cannot delete any user in this group.";
+
+                ModelState.AddModelError(nameof(MMemberDisp.gid), "自身をグループからは除名できません");
                 retInt++;
             }
             // 自分自身は除名できない
             MMember mMember = _context.MMember.FirstOrDefault(m => m.Id == mMemberDisp.Id && m.status == 1);
             if(mMember.UserId == UserId)
             {
-                ViewBag.Message = "you cannot delete yourself.";
+                ModelState.AddModelError(nameof(MMemberDisp.mid), "自身をグループからは除名できません");
                 retInt++;
             }
             return retInt;
