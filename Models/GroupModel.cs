@@ -61,6 +61,20 @@ namespace WarikakeWeb.Models
             return group;
         }
 
+        // グループIDで指定されたメンバーリストを取得
+        public List<MMember> GetMemberByGroupId(int GroupId)
+        {
+            List<MMember> memberList = _context.MMember.Where(m => m.GroupId == GroupId && m.status == 1).ToList();
+            return memberList;
+        }
+
+        // ユーザーIDで指定されたメンバーリストを取得
+        public List<MMember> GetMemberListByUserId(int UserId)
+        {
+            List<MMember> members = _context.MMember.Where(m => m.UserId == UserId && m.status == 1).ToList();
+            return members;
+        }
+
         // ユーザー登録処理
         public void CreateLogic(MGroupDisp mGroupDisp, int UserId)
         {
@@ -129,8 +143,7 @@ namespace WarikakeWeb.Models
             _context.MGroup.Update(mGroup);
             _context.SaveChanges();
 
-            MemberModel model = new MemberModel(_context);
-            List<MMember> memberList = model.GetMemberByGroupId(mGroup.GroupId);
+            List<MMember> memberList = GetMemberByGroupId(mGroup.GroupId);
 
             foreach (MMember member in memberList)
             {

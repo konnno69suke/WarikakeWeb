@@ -18,7 +18,7 @@ namespace WarikakeWeb.Controllers
         {
             _context = context;
         }
-
+        /*
         // GET: MMembers
         public ActionResult Index()
         {
@@ -230,5 +230,6 @@ namespace WarikakeWeb.Controllers
             }
             return retInt;
         }
+        */
     }
 }

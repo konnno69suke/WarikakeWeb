@@ -115,14 +115,14 @@ namespace WarikakeWeb.Controllers
             HttpContext.Session.SetInt32("UserId", user.UserId);
 
             // 単一グループに属している場合はグループ選択画面での処理を先回りして行い、グループ選択画面を飛ばす
-            MemberModel mModel = new MemberModel(_context);
-            List<MMember> members = mModel.GetMemberListByUserId(user.UserId);
+            GroupModel gModel = new GroupModel(_context);
+            List<MMember> members = gModel.GetMemberListByUserId(user.UserId);
             if (members.Count == 1)
             {
                 foreach (MMember member in members)
                 {
                     HttpContext.Session.SetInt32("GroupId", member.GroupId);
-                    GroupModel gModel = new GroupModel(_context);
+                    
                     MGroup group = gModel.GetGroupByGroupId(member.GroupId);
                     HttpContext.Session.SetString("GroupName", group.GroupName);
 

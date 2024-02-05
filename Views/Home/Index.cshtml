@@ -12,7 +12,16 @@
                 <div>
                     @Html.DisplayNameFor(model => model.GroupName)
                     :
-                    @Html.DisplayFor(model => model.GroupName)
+                    @if (Model.GroupUserId == Model.UserId)
+                    {
+                        <a asp-area="" asp-controller="Home" asp-action="GroupSet">
+                            @Html.DisplayFor(model => model.GroupName)
+                        </a>
+                    }
+                    else
+                    {
+                        @Html.DisplayFor(model => model.GroupName)
+                    }
                      | 
                     @Html.DisplayNameFor(model => model.UserName)
                     :
@@ -37,11 +46,6 @@
                         <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
                         |
                         <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
-                        @{if (Model.GroupUserId == Model.UserId){
-                            
-                            <a asp-area="" asp-controller="MGroups" asp-action="Index">グループ</a>
-                            }
-                        }
                     </p>
                 </div>
                 <div class="container">

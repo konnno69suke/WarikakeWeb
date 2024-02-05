@@ -1,7 +1,7 @@
 ﻿@model WarikakeWeb.ViewModel.MGenreDisp
 
 @{
-    ViewData["Title"] = "Delete of Genre";
+    ViewData["Title"] = "種別削除";
 }
 
 <h1>削除</h1>
@@ -22,6 +22,7 @@
     <form asp-action="Delete">
         <input type="hidden" asp-for="Id" />
         <input type="submit" value="削除" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+        <span asp-validation-for="Id" class="text-danger"></span>
+        <a asp-action="Index">一覧に戻る</a>
     </form>
 </div>
