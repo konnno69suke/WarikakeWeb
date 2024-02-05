@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WarikakeWeb.Data;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -29,14 +31,9 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            // 所有グループのみ表示可
-            List<MMemberDisp> memberList = _context.Database.SqlQuery<MMemberDisp>($@"
-                select mm.Id, 0 gid, mg.groupname, 0 mid, mu.username
-                from MMember mm inner join mgroup mg on mm.groupid = mg.groupid
-                inner join muser mu on mm.userid = mu.userid
-                where mg.UserId = {UserId}
-                and mm.status = 1 and mg.status = 1 and mu.status = 1
-                order by mm.GroupId, mm.UserId").ToList();
+            // 検索処理
+            MemberModel model = new MemberModel(_context);
+            List<MMemberDisp> memberList = model.GetGroupMemberList((int)UserId);
 
             return View(memberList);
         }
@@ -57,12 +54,11 @@ namespace WarikakeWeb.Controllers
             ViewBag.Groups = new SelectList(groups.Select(g => new { Id = g.GroupId, Name = g.GroupName}), "Id", "Name");
             List<MUser> users = _context.MUser.Where(u => u.status == 1).ToList();
             ViewBag.Users = new SelectList(users.Select(u => new { Id = u.UserId, Name = u.UserName }), "Id", "Name");
+
             return View();
         }
 
         // POST: MMembers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind("gid,mid")] MMemberDisp mMemberDisp)
@@ -89,35 +85,29 @@ namespace WarikakeWeb.Controllers
                 return View(mMemberDisp);
             }
 
-            if (ModelState.IsValid)
+            // 一般入力チェック
+            if (!ModelState.IsValid)
             {
-                // 業務入力チェック
-                if(0 < ValidateLogic(mMemberDisp))
-                {
-                    return View(mMemberDisp);
-                }
-
-                DateTime currTime = DateTime.Now;
-                string currPg = "MMemberInsert";
-
-                MMember mMember = new MMember();
-                mMember.status = 1;
-                mMember.GroupId = mMemberDisp.gid;
-                mMember.UserId = mMemberDisp.mid;
-                mMember.CreatedDate = currTime;
-                mMember.CreateUser = UserId.ToString();
-                mMember.CreatePg = currPg;
-                mMember.UpdatedDate = currTime;
-                mMember.UpdateUser = UserId.ToString();
-                mMember.UpdatePg = currPg;
-                Serilog.Log.Information($"SQL param: MMember:{mMember.ToString()}");
-                _context.Add(mMember);
-                _context.SaveChanges();
+                return View(mMemberDisp);
+            }
+            // 業務入力チェック
+            if (0 < ValidateLogic(mMemberDisp))
+            {
+                return View(mMemberDisp);
+            }
+            try
+            {
+                // 登録処理
+                MemberModel model = new MemberModel(_context);
+                model.CreateLogic(mMemberDisp, (int)UserId);
 
                 return RedirectToAction(nameof(Index));
             }
-
-            return View(mMemberDisp);
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+                return View(mMemberDisp);
+            }
         }
 
         // GET: MMembers/Delete/5
@@ -137,20 +127,9 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
-            MMember mMember = _context.MMember.FirstOrDefault<MMember>(m => m.Id == id && m.status == 1);
-            if (mMember == null)
-            {
-                return NotFound();
-            }
-
             // 指定メンバーの表示情報を取得
-            Serilog.Log.Information($"SQL param: {id}");
-            MMemberDisp mMemberDisp = _context.Database.SqlQuery<MMemberDisp>($@"
-                select mm.id, mm.groupid gid, mg.groupname, mm.userid mid, mu.username
-                from mmember mm inner join mgroup mg on mm.groupid = mg.groupid
-                inner join muser mu on mm.userid = mu.userid
-                where mm.id = {id}
-                and mm.status = 1 and mg.status = 1 and mu.status = 1").FirstOrDefault();
+            MemberModel model = new MemberModel(_context);
+            MMemberDisp mMemberDisp = model.GetMemberDispById((int)id);
 
             return View(mMemberDisp);
         }
@@ -158,7 +137,7 @@ namespace WarikakeWeb.Controllers
         // POST: MMembers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id, [Bind("Id,groupName,userName")] MMemberDisp mMemberDisp)
+        public ActionResult DeleteConfirmed(int? id, [Bind("Id,groupName,userName")] MMemberDisp mMemberDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -169,36 +148,37 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 業務入力チェック
             if (0 < DelPersonCheck(mMemberDisp, (int)UserId))
             {
                 return View(mMemberDisp);
             }
-            var mMember = _context.MMember.Find(id);
-            if (mMember != null)
+
+            // 対象を検索
+            MemberModel model = new MemberModel(_context);
+            MMember mMember = model.GetMemberById((int)id);
+            if (mMember == null)
             {
-                try
-                {
-                    DateTime currTime = DateTime.Now;
-                    string currPg = "MMembersDelete";
-
-                    mMember.status = (int)statusEnum.削除;
-                    mMember.UpdatedDate = currTime;
-                    mMember.UpdateUser = UserId.ToString();
-                    mMember.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MMember: {mMember.ToString()}");
-                    _context.Update(mMember);
-                    _context.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                    // todo パラメータなしのdelete画面では表示エラーになるのでは
-                    return View();
-                }
-
+                return NotFound();
             }
+            try
+            {
+                // 更新処理
+                model.StatusChangeLogic(mMember,(int)UserId);
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+                // 指定メンバーの表示情報を取得
+                return View(mMemberDisp);
+            }
         }
 
         private int ValidateLogic(MMemberDisp mMemberDisp)
@@ -216,7 +196,6 @@ namespace WarikakeWeb.Controllers
 
         private int InsPersonCheck(MMemberDisp mMemberDisp, int UserId)
         {
-            
             int retInt = 0;
             MGroup group = _context.MGroup.FirstOrDefault(g => g.GroupId == mMemberDisp.gid && g.status == 1);
             if (group.UserId != UserId)
@@ -229,8 +208,9 @@ namespace WarikakeWeb.Controllers
         private int DelPersonCheck(MMemberDisp mMemberDisp, int UserId)
         {
             // 自分のグループは除名できない
+            MemberModel model = new MemberModel(_context);
             int retInt = 0;
-            Boolean res = _context.Database.SqlQuery<int>($@"
+            bool res = _context.Database.SqlQuery<int>($@"
                 select mg.userid
                 from mgroup mg inner join mmember mm on mg.groupid = mm.groupid
                 where mm.id = {mMemberDisp.Id}
@@ -238,12 +218,11 @@ namespace WarikakeWeb.Controllers
                 and mg.status = 1 and mm.status = 1").Any();
             if (!res)
             {
-
                 ModelState.AddModelError(nameof(MMemberDisp.gid), "自身をグループからは除名できません");
                 retInt++;
             }
             // 自分自身は除名できない
-            MMember mMember = _context.MMember.FirstOrDefault(m => m.Id == mMemberDisp.Id && m.status == 1);
+            MMember mMember = model.GetMemberById(mMemberDisp.Id);
             if(mMember.UserId == UserId)
             {
                 ModelState.AddModelError(nameof(MMemberDisp.mid), "自身をグループからは除名できません");

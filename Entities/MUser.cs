@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using WarikakeWeb.Data;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.Entities
 {
     public class MUser
     {
@@ -21,17 +21,17 @@ namespace WarikakeWeb.Models
         public int Id { get; set; }
         public int? status { get; set; }
         public int UserId { get; set; }
-        public String UserName { get; set; }
-        public String Password { get; set; }
-        public String Email { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public string Email { get; set; }
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String? CreateUser { get; set; }
-        public String? CreatePg { get; set; }
+        public string? CreateUser { get; set; }
+        public string? CreatePg { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public String? UpdateUser { get; set; }
-        public String? UpdatePg { get; set; }
+        public string? UpdateUser { get; set; }
+        public string? UpdatePg { get; set; }
 
         // 指定したグループのユーザー一覧を取得
         public List<MUser> GetUsers(int GroupId)
@@ -48,7 +48,7 @@ namespace WarikakeWeb.Models
         }
 
 
-        public String ToString()
+        public string ToString()
         {
             FormattableString fs = $"MSalt :{Id}, {status}, {UserId}, {UserName}, ******, {Email}";
             return fs.ToString();

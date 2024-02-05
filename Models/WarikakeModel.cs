@@ -1,50 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Text;
 using WarikakeWeb.Data;
-using WarikakeWeb.Logic;
+using WarikakeWeb.Entities;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Models
 {
-
-    //SQLで取得する際のモデル
-    public class WarikakeQuery
+    public class WarikakeModel
     {
-        public int CostId { get; set; }
-        [Display(Name = "Cost Title")]
-        public String? CostTitle { get; set; }
-        public int GroupId { get; set; }
-        [Display(Name = "Group Name")]
-        public string? GroupName { get; set; }
-        public int GenreId { get; set; }
-        [Display(Name = "Genre Name")]
-        public String? GenreName { get; set; }
-        [Display(Name = "status")]
-        public int status { get; set; }
-        public int CostStatus { get; set; }
-        [Display(Name = "Cost Amount")]
-        public int CostAmount { get; set; }
-        [DataType(DataType.Date)]
-        [Display(Name = "Cost Date")]
-        public DateTime CostDate { get; set; }
-        public int PayId { get; set; }
-        public int PayUserId { get; set; }
-        [Display(Name = "Pay User Name")]
-        public String PayUserName { get; set; }
-        [Display(Name = "Pay Amount")]
-        public int PayAmount { get; set; }
-        public int RepayId { get; set; }
-        public int RepayUserId { get; set; }
-        [Display(Name = "Repay User Name")]
-        public String RepayUserName { get; set; }
-        [Display(Name = "Repay Amount")]
-        public int RepayAmount { get; set; }
+        WarikakeWebContext _context;
 
-
-        private readonly WarikakeWebContext _context;
-
-        public WarikakeQuery(WarikakeWebContext context)
+        public WarikakeModel(WarikakeWebContext context)
         {
             _context = context;
         }
@@ -321,11 +287,18 @@ namespace WarikakeWeb.Models
             return warikakeQueries;
         }
 
+        // 一括処理等のループ内でたった今登録したTCostレコードを取得する
+        public TCost GetCurrentCost(int UserId, DateTime currTime, String pg)
+        {
+            TCost currCost = _context.TCost.Where(c => c.UpdateUser.Equals(UserId.ToString()) && c.UpdatedDate.Equals(currTime) && c.UpdatePg.Equals(pg)).OrderByDescending(a => a.CostId).FirstOrDefault();
+
+            return currCost;
+        }
+
         public void CreateLogic(WarikakeDisp input, int GroupId, int UserId)
         {
             DateTime currDate = DateTime.Now;
-            String currPg = "WarikakeInsert";
-            ModelLogic modelLogic = new ModelLogic(_context);
+            string currPg = "WarikakeInsert";
 
             Serilog.Log.Information($"SQL param: WarikakeDisp:{input.ToString()}, GroupId:{GroupId}, UserId:{UserId}");
 
@@ -337,7 +310,7 @@ namespace WarikakeWeb.Models
             if (input.GenreId == 0)
             {
                 updStatus = (int)statusEnum.手動精算;
-                updGenreName = (statusEnum.手動精算).ToString();
+                updGenreName = statusEnum.手動精算.ToString();
             }
             else
             {
@@ -364,7 +337,7 @@ namespace WarikakeWeb.Models
             _context.Add(cost);
 
             _context.SaveChanges();
-            TCost currCost = modelLogic.GetCurrentCost((int)UserId, currDate, currPg);
+            TCost currCost = GetCurrentCost(UserId, currDate, currPg);
             try
             {
                 foreach (WarikakePayDisp inputPay in input.Pays)
@@ -463,7 +436,7 @@ namespace WarikakeWeb.Models
             UpdateLogic(input, GroupId, UserId, status, true);
         }
 
-        public void UpdateLogic(WarikakeDisp input, int GroupId, int UserId, int status, Boolean isStatus)
+        public void UpdateLogic(WarikakeDisp input, int GroupId, int UserId, int status, bool isStatus)
         {
             DateTime dateTime = DateTime.Now;
             int CostId = input.CostId;
@@ -477,7 +450,7 @@ namespace WarikakeWeb.Models
                 existingCost.status = status;
             }
             existingCost.CostTitle = input.CostTitle;
-            existingCost.GroupId = (int)GroupId;
+            existingCost.GroupId = GroupId;
             existingCost.GenreId = input.GenreId;
             MGenre genre = _context.MGenre.Where(g => g.GenreId == input.GenreId).FirstOrDefault();
             existingCost.GenreName = genre.GenreName;
@@ -526,99 +499,7 @@ namespace WarikakeWeb.Models
             }
             _context.SaveChanges();
         }
-    }
-    // 画面表示用モデル　検索条件を持つ
-    public class WarikakeSearch : WarikakeIndex
-    {
-        // ステータス
-        // 年月
-        // 種別
-        public int GenreId { get; set; }
-        // 人
 
-        public string currDisp { get; set; }
-        public int prevYear { get; set; }
-        public int currYear { get; set; }
-        public int nextYear { get; set; }
-
-        public string prevMonth { get; set; }
-        public string currMonth { get; set; }
-        public string nextMonth { get; set; }
-
-        public string prevDate { get; set; }
-        public string currDate { get; set; }
-        public string nextDate { get; set; }
-
-
-        public string warikakeChart { get; set; }
-    }
-
-
-    // 画面表示用モデル　リストで一覧表示用と、同型の合計表示用を持っている
-    public class WarikakeIndex
-    {
-        public List<WarikakeDisp> warikakeDisps { get; set; }
-
-        public WarikakeDisp warikakeSum { get; set; }
-
-        public WarikakeIndex()
-        {
-            warikakeDisps = new List<WarikakeDisp>();
-            warikakeSum = new WarikakeDisp();
-        }
-    }
-
-    //　画面表示用モデル（親）
-    public class WarikakeDisp
-    {
-        public int CostId { get; set; }
-        [Display(Name = "備考")]
-        public String? CostTitle { get; set; }
-        public int GroupId { get; set; }
-        [Display(Name = "グループ")]
-        public string? GroupName { get; set; }
-        [Display(Name = "種別")]
-        public int GenreId { get; set; }
-        [Display(Name = "種別")]
-        public String? GenreName { get; set; }
-        [Display(Name = "登録状態")]
-        public int status { get; set; }
-        [Display(Name = "清算状況")]
-        public String? statusName { get; set; }
-        public int CostStatus { get; set; }
-        [Display(Name = "支払額")]
-        [Range(1, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int CostAmount { get; set; }
-        [Display(Name = "支払額")]
-        public String? CostDisp { get; set; }
-        [DataType(DataType.Date)]
-        [Display(Name = "支払日")]
-        public DateTime CostDate { get; set; }
-        public List<WarikakePayDisp> Pays { get; set; }
-        public List<WarikakeRepayDisp> Repays { get; set; }
-
-        public WarikakeDisp()
-        {
-            Pays = new List<WarikakePayDisp>();
-            Repays = new List<WarikakeRepayDisp>();
-        }
-
-        //ログ出力用にオーバーライド
-        public string ToString()
-        {
-            FormattableString fs = $"Wari :{CostId}, {CostTitle}, {GroupId}, {GroupName}, {GenreId}, {GenreName}, {status}, {statusName}, {CostStatus}, {CostAmount}, {CostDisp}, {CostDate}";
-            StringBuilder sb = new StringBuilder();
-            sb.Append(fs);
-            for (int i = 0; i < Pays.Count; i++)
-            {
-                sb.Append($" Pays({i}) :{Pays[i].PayId}, {Pays[i].PayUserId}, {Pays[i].PayUserOn}, {Pays[i].PayUserName}, {Pays[i].PayAmount}, {Pays[i].PayDisp}");
-            }
-            for (int j = 0; j < Repays.Count; j++)
-            {
-                sb.Append($" Reps({j}) :{Repays[j].RepayId}, {Repays[j].RepayUserId}, {Repays[j].RepayUserOn}, {Repays[j].RepayUserName}, {Repays[j].RepayAmount}, {Repays[j].RepayDisp}");
-            }
-            return sb.ToString();
-        }
 
         // 一覧画面表示用に編集
         public List<WarikakeDisp> GetWarikakeDisps(List<WarikakeQuery> warikakeQueries)
@@ -694,7 +575,7 @@ namespace WarikakeWeb.Models
                 WarikakePayDisp payDisp = new WarikakePayDisp();
                 payDisp.PayId = item.PayId;
                 payDisp.PayUserId = item.PayUserId;
-                payDisp.PayUserOn = (item.PayAmount != 0 ? true : false);
+                payDisp.PayUserOn = item.PayAmount != 0 ? true : false;
                 payDisp.PayUserName = item.PayUserName;
                 payDisp.PayAmount = item.PayAmount;
                 payDisp.PayDisp = item.PayAmount.ToString("C0", new CultureInfo("ja-JP"));
@@ -703,7 +584,7 @@ namespace WarikakeWeb.Models
                 WarikakeRepayDisp repayDisp = new WarikakeRepayDisp();
                 repayDisp.RepayId = item.RepayId;
                 repayDisp.RepayUserId = item.RepayUserId;
-                repayDisp.RepayUserOn = (item.RepayAmount != 0 ? true : false);
+                repayDisp.RepayUserOn = item.RepayAmount != 0 ? true : false;
                 repayDisp.RepayUserName = item.RepayUserName;
                 repayDisp.RepayAmount = item.RepayAmount;
                 repayDisp.RepayDisp = item.RepayAmount.ToString("C0", new CultureInfo("ja-JP"));
@@ -713,17 +594,17 @@ namespace WarikakeWeb.Models
         }
 
         // 入力画面表示用に編集
-        public WarikakeDisp GetWarikakeDispInit(List<MUser> users, int UserId, Boolean repayOn)
+        public WarikakeDisp GetWarikakeDispInit(List<MUser> users, int GroupId, int UserId, bool repayOn)
         {
             WarikakeDisp input = new WarikakeDisp();
-            input.GroupId = (int)GroupId;
+            input.GroupId = GroupId;
             DateTime dateTime = DateTime.Now;
             input.CostDate = dateTime;
             foreach (MUser user in users)
             {
                 WarikakePayDisp inputPay = new WarikakePayDisp();
                 inputPay.PayUserId = user.UserId;
-                inputPay.PayUserOn = (user.UserId == UserId ? true : false);
+                inputPay.PayUserOn = user.UserId == UserId ? true : false;
                 inputPay.PayUserName = user.UserName;
                 input.Pays.Add(inputPay);
                 WarikakeRepayDisp inputRepay = new WarikakeRepayDisp();
@@ -758,7 +639,8 @@ namespace WarikakeWeb.Models
                     chartDataset.label = "'" + warikakeQuery.GenreName + "'";
                     chartDataset.borderWidth = 1;
                 }
-                while (day <= warikakeQuery.CostId) {
+                while (day <= warikakeQuery.CostId)
+                {
                     if (day == warikakeQuery.CostId)
                     {
                         chartDataset.data.Add(warikakeQuery.CostAmount);
@@ -841,86 +723,35 @@ namespace WarikakeWeb.Models
             return warikakeGraphs;
         }
 
-    }
 
-    // statusのenum
-    public enum statusEnum
-    {
-        仮登録 = 0,
-        未精算 = 1,
-        精算済 = 2,
-        一括精算済 = 3,
-        手動精算 = 4,
-        定期登録 = 6,
-        合計 = 7,
-        移行 = 8,
-        削除 = 9
-    }
-    //　画面表示用モデル（子１）
-    public class WarikakePayDisp
-    {
-        public int PayId { get; set; }
-        public int PayUserId { get; set; }
-        public Boolean PayUserOn { get; set; }
-        [Display(Name = "メンバー")]
-        public String? PayUserName { get; set; }
-        [Display(Name = "立替額")]
-        [Range(0, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int PayAmount { get; set; }
-        [Display(Name = "立替額")]
-        public String? PayDisp {  get; set; }
-    }
-    //　画面表示用モデル（子２）
-    public class WarikakeRepayDisp
-    {
-        public int RepayId { get; set; }
-        public int RepayUserId { get; set; }
-        [Display(Name = "メンバー")]
-        public Boolean RepayUserOn { get; set; }
-        public String? RepayUserName { get; set; }
-        [Display(Name = "割勘額")]
-        [Range(0, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int RepayAmount { get; set;}
-        [Display(Name = "割勘額")]
-        public String ? RepayDisp { get; set; }
-    }
-
-
-
-
-    // メッセージ表示用モデル（親）
-    public class WarikakeProcess
-    {
-        public int memberNumber { get; set; }
-        [Display(Name = "精算時受け取る側")]
-        public List<WarikakeUserProcess> plusUsers { get; set; }
-        [Display(Name = "精算時支払う側")]
-        public List<WarikakeUserProcess> minusUsers { get; set; }
-
-        public WarikakeProcess()
+        // 直近の登録情報メッセージを取得
+        public String LastMessage(int GroupId)
         {
-            memberNumber = 0;
-            plusUsers = new List<WarikakeUserProcess>();
-            minusUsers = new List<WarikakeUserProcess>();
+            string fs = "";
+            TCost cost = _context.TCost.Where(c => c.GroupId == (int)GroupId).OrderByDescending(c => c.UpdatedDate).FirstOrDefault();
+            if (cost != null && cost.CostId != null)
+            {
+                MUser user = _context.MUser.Where(u => u.UserId == int.Parse(cost.UpdateUser)).FirstOrDefault();
+                String formatDate = cost.CostDate.ToString("yyyy/MM/dd");
+
+                fs = $"※直前に登録されたデータは{cost.UpdatedDate}に{user.UserName}が登録した{formatDate}の{cost.CostAmount}円の{cost.GenreName}です。";
+            }
+            return fs;
         }
 
-        // 表示用メッセージ一覧の取得
-
-
-        public List<String> repayMessage(List<WarikakeQuery> warikakeQueries)
+        // 精算情報メッセージ一覧の取得
+        public List<string> repayMessage(List<WarikakeQuery> warikakeQueries)
         {
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            warikakeProcess = warikakeProcess.GetWarikakeProcess(warikakeQueries);
             // 精算指示の文字列作成
             List<string> messageList = new List<string>();
+
+            WarikakeProcess  warikakeProcess = GetWarikakeProcess(warikakeQueries);
             foreach (WarikakeUserProcess plsUsr in warikakeProcess.plusUsers)
             {
-                //sb.Append(plsUsr.UserName).Append("は合計").Append(plsUsr.processAmount).Append("円を支払うこと。\r\n");
                 messageList.Add($"{plsUsr.UserName}は合計{plsUsr.processAmount}円を支払うこと。");
             }
             foreach (WarikakeUserProcess mnsUsr in warikakeProcess.minusUsers)
             {
-                //sb.Append(mnsUsr.UserName).Append("は合計").Append(mnsUsr.processAmount * -1).Append("円受け取ること。\r\n");
                 messageList.Add($"{mnsUsr.UserName}は合計{mnsUsr.processAmount * -1}円を受け取ること。");
             }
             return messageList;
@@ -948,75 +779,4 @@ namespace WarikakeWeb.Models
             return warikakeProcess;
         }
     }
-    // メッセージ表示用モデル（子）
-    public class WarikakeUserProcess
-    {
-        public int UserId { get; set; }
-        [Display(Name = "精算者")]
-        public String UserName { get; set; }
-        [Display(Name = "精算額")]
-        public int processAmount { get; set; }
-    }
-
-    public class WarikakeGraph
-    {
-        public int GenreId { get; set; }
-        public String GenreName { get; set; }
-        public int Amount1 { get; set; }
-        public int Amount2 { get; set; }
-        public int Amount3 { get; set; }
-        public int Amount4 { get; set; }
-        public int Amount5 { get; set; }
-        public int Amount6 { get; set; }
-        public int Amount7 { get; set; }
-        public int Amount8 { get; set; }
-        public int Amount9 { get; set; }
-        public int Amount10 { get; set; }
-        public int Amount11 { get; set; }
-        public int Amount12 { get; set; }
-    }
-
-    public class WarikakeChart
-    {
-        public string type { get; set; }
-        public ChartData data { get; set; }
-
-        public ChartOption options { get; set; }
-
-        public WarikakeChart()
-        {
-            type = "'line'";
-            data = new ChartData();
-            data.labels = new List<string>();
-            data.datasets = new List<ChartDataset>();
-            options = new ChartOption();
-            options.scales = new ChartScale();
-            options.scales.y = new ChartY();
-            options.scales.y.beginAtZero = true;
-        }
-    }
-
-    public class ChartData
-    {
-        public List<String> labels {get; set;}
-        public List<ChartDataset> datasets { get; set;}
-    }
-    public class ChartOption
-    {
-        public ChartScale scales { get; set; }
-    }
-    public class ChartDataset
-    {
-        public String label { get; set; }
-        public List<int> data { get; set; } = new List<int>();
-        public int borderWidth { get; set; }
-    }
-    public class ChartScale
-    {
-        public ChartY y { get; set; }
-    }
-    public class ChartY
-    {
-        public Boolean beginAtZero { get; set; }
-    } 
 }

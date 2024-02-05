@@ -1,4 +1,4 @@
-﻿@model WarikakeWeb.Models.WarikakeIndex
+﻿@model WarikakeWeb.ViewModel.WarikakeIndex
 @{
     ViewData["Title"] = "未精算一覧";
 }
@@ -88,7 +88,7 @@
                 }
             </td>
             <td style="font-weight: bold;">
-                <a asp-action="SettlementAll" asp-route-id="model.warikakeSum.CostId">一括精算</a>
+                <a asp-action="SettlementAll" asp-route-id="@Model.warikakeSum.CostId">一括精算</a>
             </td>
         </tr>
         @foreach (var item in Model.warikakeDisps)

@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
 using WarikakeWeb.Data;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -32,38 +31,23 @@ namespace WarikakeWeb.Controllers
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 検索処理
+            UserModel model = new UserModel(_context);
             MGroup mGroup = _context.MGroup.Where(g => g.GroupId == GroupId && g.status == 1).FirstOrDefault();
-            List<MUser> users = null;
+            List<MUser> users = new List<MUser>();
             if (mGroup.UserId == UserId)
             {
                 // リーダーの場合
-                Serilog.Log.Information($"SQL param: {GroupId}");
-                users = _context.Database.SqlQuery<MUser>($@"
-                        select mu.* 
-                        from muser mu 
-                        inner join mmember mm on mu.userid = mm.userid 
-                        inner join mgroup mg on mm.groupid = mg.groupid
-                        where mg.groupid = {GroupId}
-                        and mu.status = 1 and mm.status = 1 and mg.status = 1
-                        order by mu.userid").ToList();
+                users = model.GetGroupUsers((int)GroupId);
             }
             else
             {
                 // メンバーの場合
-                users = _context.MUser.Where(u =>u.status == 1 && u.UserId == UserId).ToList();
+                users.Add(model.GetUserByUserId((int)UserId));
             }
 
             // 画面表示処理
-            List<MUserDisp> disps = new List<MUserDisp>();
-            foreach(MUser user in users)
-            {
-                MUserDisp disp = new MUserDisp();
-                disp.Id = user.Id;
-                disp.UserName = user.UserName;
-                disp.Email = user.Email;
-                disp.StartDate = user.StartDate;
-                disps.Add(disp);
-            }
+            List<MUserDisp> disps = model.GetMUserDispList(users);
+
             return View(disps);
         }
 
@@ -80,17 +64,15 @@ namespace WarikakeWeb.Controllers
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 検索処理
-            var mUser = _context.MUser.Where(u => u.Id == id && u.status == 1).FirstOrDefault();
+            UserModel model = new UserModel(_context);
+            MUser mUser = model.GetUserById(id);
             if (mUser == null)
             {
                 return NotFound();
             }
+
             // 画面表示処理
-            MUserDisp mUserDisp = new MUserDisp();
-            mUserDisp.Id = mUser.Id;
-            mUserDisp.UserName = mUser.UserName;
-            mUserDisp.Email = mUser.Email;
-            mUserDisp.StartDate = mUser.StartDate;
+            MUserDisp mUserDisp = model.GetMUserDisp(mUser);
 
             return View(mUserDisp);
         }
@@ -114,8 +96,6 @@ namespace WarikakeWeb.Controllers
         }
 
         // POST: MUsers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind("UserName,Password,PasswordAssert,Email")] MUserDisp mUserDisp)
@@ -130,85 +110,20 @@ namespace WarikakeWeb.Controllers
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 一般入力チェック
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return View(mUserDisp);
             }
-
             // 業務入力チェック
             if (0 < ValidateLogic(mUserDisp))
             {
                 return View(mUserDisp);
             }
-
             try 
             {
-                // ユーザー登録
-                DateTime dateTime = DateTime.Now;
-                string currPg = "MUsersInsert";
-                int newUserId = getNextUserId();
-
-                // パスワードハッシュ対応有無で処理分岐
-                IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-                string HashAndSalt = configuration["HashAndSalt"];
-                if (HashAndSalt.Equals("use"))
-                {
-                    // パスワードをハッシュ化
-                    byte[] salt = new byte[128 / 8];
-                    using var rng = RandomNumberGenerator.Create();
-                    rng.GetBytes(salt);
-                    string hash = getHasshedPassword(mUserDisp.Password, salt);
-
-                    MUser mUser = new MUser();
-                    mUser.UserId = newUserId;
-                    mUser.status = 1;
-                    mUser.UserName = mUserDisp.UserName;
-                    mUser.Email = mUserDisp.Email;
-                    mUser.Password = hash;
-                    mUser.StartDate = dateTime.Date;
-                    mUser.CreatedDate = dateTime;
-                    mUser.CreateUser = UserId.ToString();
-                    mUser.CreatePg = currPg;
-                    mUser.UpdatedDate = dateTime;
-                    mUser.UpdateUser = UserId.ToString();
-                    mUser.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
-                    _context.Add(mUser);
-
-                    MSalt mSalt = new MSalt();
-                    mSalt.status = 1;
-                    mSalt.UserId = newUserId;
-                    mSalt.salt = salt;
-                    mSalt.CreatedDate = dateTime;
-                    mSalt.CreateUser = UserId.ToString();
-                    mSalt.CreatePg = currPg;
-                    mSalt.UpdatedDate = dateTime;
-                    mSalt.UpdateUser = UserId.ToString();
-                    mSalt.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MSalt: {mSalt.ToString()}");
-                    _context.Add(mSalt);
-                }
-                else
-                {
-                    // パスワードをハッシュ化しない
-                    MUser mUser = new MUser();
-                    mUser.UserId = newUserId;
-                    mUser.status = 1;
-                    mUser.UserName = mUserDisp.UserName;
-                    mUser.Email = mUserDisp.Email;
-                    mUser.Password = mUserDisp.Password;
-                    mUser.StartDate = dateTime.Date;
-                    mUser.CreatedDate = dateTime;
-                    mUser.CreateUser = UserId.ToString();
-                    mUser.CreatePg = currPg;
-                    mUser.UpdatedDate = dateTime;
-                    mUser.UpdateUser = UserId.ToString();
-                    mUser.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
-                    _context.Add(mUser);
-                }
-
-                _context.SaveChanges();
+                // 登録処理
+                UserModel model = new UserModel(_context);
+                model.CreateLogic(mUserDisp, (int)UserId);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -234,22 +149,23 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
-            // 画面表示処理
-            MUserDisp mUserDisp = DispLogic((int)id);
-            if (mUserDisp == null)
+            // DB検索
+            UserModel model = new UserModel(_context);
+            MUser mUser = model.GetUserById((int)id);
+            if (mUser == null)
             {
                 return NotFound();
             }
 
+            // 画面表示処理
+            MUserDisp mUserDisp = model.GetMUserDisp(mUser);
             return View(mUserDisp);
         }
 
         // POST: MUsers/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, [Bind("Id,UserName,Password,PasswordAssert,NewPassword,Email,StartDate")] MUserDisp mUserDisp)
+        public ActionResult Edit(int? id, [Bind("Id,UserName,Password,PasswordAssert,NewPassword,Email,StartDate")] MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -260,7 +176,7 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id != mUserDisp.Id)
+            if (id == null)
             {
                 return NotFound();
             }
@@ -288,34 +204,10 @@ namespace WarikakeWeb.Controllers
 
             try
             {
-                DateTime currDate = DateTime.Now;
-                string currPg = "MUsersUpdate";
+                // 更新処理
+                UserModel model = new UserModel(_context);
+                model.UpdateLogic(mUserDisp, (int)UserId, (int)id);
 
-                // パスワードハッシュ対応有無で処理分岐
-                IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-                string HashAndSalt = configuration["HashAndSalt"];
-                string password = null;
-                if (HashAndSalt.Equals("use"))
-                {
-                    // パスワードをハッシュ化
-                    if (!mUserDisp.NewPassword.IsNullOrEmpty())
-                    {
-                        password = getHasshedPassword(mUserDisp.NewPassword, getSalt(mUserDisp.Id));
-                    }
-                }
-                else
-                {
-                    password = mUserDisp.Password;
-                }
-                MUser existingUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
-                existingUser.UserName = mUserDisp.UserName;
-                existingUser.Password = password;
-                existingUser.Email = mUserDisp.Email;
-                existingUser.UpdatedDate = currDate;
-                existingUser.UpdateUser = UserId.ToString();
-                existingUser.UpdatePg = currPg;
-                Serilog.Log.Information($"SQL param: MUser: {existingUser.ToString()}");
-                _context.Update(existingUser);
                 _context.SaveChanges();
             }
             catch (Exception ex)
@@ -343,12 +235,15 @@ namespace WarikakeWeb.Controllers
                 return NotFound();
             }
 
-            // 指定ユーザーの表示情報を取得
-            MUserDisp mUserDisp = DispLogic((int)id);
-            if(mUserDisp == null)
+            // DB検索
+            UserModel model = new UserModel(_context);
+            MUser mUser = model.GetUserById((int)id);
+            if (mUser == null)
             {
-                return NotFound();
+                return null;
             }
+            // 画面表示処理
+            MUserDisp mUserDisp = model.GetMUserDisp(mUser);
 
             return View(mUserDisp);
         }
@@ -356,7 +251,7 @@ namespace WarikakeWeb.Controllers
         // POST: MUsers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id, [Bind("Id,Password,PasswordAssert")] MUserDisp mUserDisp)
+        public ActionResult DeleteConfirmed(int? id, [Bind("Id,Password,PasswordAssert")] MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -367,71 +262,39 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id != mUserDisp.Id)
+            if (id == null)
             {
                 return NotFound();
             }
+
             // 本人チェック
             if (0 < PersonCheck(mUserDisp))
             {
                 return View(mUserDisp);
             }
-            
             // 業務入力チェック
             if (0 < ValidateLogic(mUserDisp))
             {
                 return View(mUserDisp);
             }
-            var mUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
-            if (mUser != null)
+
+            try
             {
-                try
-                {
-                    string currPg = "MUsersDelete";
-                    DateTime currTime = DateTime.Now;
-
-                    mUser.status = (int)statusEnum.削除;
-                    mUser.UpdatedDate = currTime;
-                    mUser.UpdateUser = UserId.ToString();
-                    mUser.UpdatePg = currPg;
-                    Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
-                    _context.MUser.Update(mUser);
-
-                    // パスワードハッシュ対応有の場合、ソルトテーブルもステータス更新
-                    IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-                    string HashAndSalt = configuration["HashAndSalt"];
-                    if (HashAndSalt.Equals("use"))
-                    {
-                        MSalt mSalt = _context.MSalt.Where(s => s.UserId == mUser.UserId && s.status == 1).FirstOrDefault();
-                        mSalt.status = (int)statusEnum.削除;
-                        mSalt.UpdatedDate = currTime;
-                        mSalt.UpdateUser = UserId.ToString();
-                        mSalt.UpdatePg = currPg;
-                        Serilog.Log.Information($"SQL param: MSalt: {mSalt.ToString()}");
-                        _context.MSalt.Update(mSalt);
-                    }
-
-                    _context.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                    // todo パラメータなしのdelete画面では表示エラーになるのでは
-                    return View();
-                }
+                // 更新処理
+                UserModel model = new UserModel(_context);
+                model.StatusChangeLogic((int)UserId, (int)id);
+                _context.SaveChanges();
             }
+            catch (Exception ex)
+            {
+                // todo パラメータなしのdelete画面では表示エラーになるのでは
+                return View();
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
-        private int getNextUserId()
-        {
-            int UserId = _context.MUser.Any() ? _context.MUser.Max(a => a.UserId) : -0;
-
-            UserId++;
-
-            return UserId;
-        }
-
-        private int ValidateLogic(MUserDisp mUserDisp)
+        public int ValidateLogic(MUserDisp mUserDisp)
         {
             int retInt = 0;
             if (!mUserDisp.Password.Equals(mUserDisp.PasswordAssert))
@@ -439,7 +302,8 @@ namespace WarikakeWeb.Controllers
                 ModelState.AddModelError(nameof(MUserDisp.Password), "パスワードと確認用は一致させてください");
                 retInt++;
             }
-            string hasshedPassword = getHasshedPassword(mUserDisp.Password, getSalt(mUserDisp.Id));
+            UserModel model = new UserModel(_context);
+            string hasshedPassword = model.getHasshedPassword(mUserDisp.Password, model.getSalt(mUserDisp.Id));
             Boolean useChk = _context.MUser.Any(u => u.Email.Equals(mUserDisp.Email) && u.Password.Equals(hasshedPassword) && u.status == 1 && u.Id != mUserDisp.Id);
             if (useChk)
             {
@@ -449,7 +313,7 @@ namespace WarikakeWeb.Controllers
             return retInt;
         }
 
-        private int PassWordCheck(MUserDisp mUserDisp)
+        public int PassWordCheck(MUserDisp mUserDisp)
         {
             int retInt = 0;
             if(!mUserDisp.NewPassword.IsNullOrEmpty()) 
@@ -463,81 +327,20 @@ namespace WarikakeWeb.Controllers
             return retInt;
         }
 
-        private MUserDisp DispLogic(int id)
-        {
-            MUser mUser = _context.MUser.FirstOrDefault(u => u.Id == id && u.status == 1);
-            if (mUser == null)
-            {
-                return null;
-            }
-            MUserDisp mUserDisp = new MUserDisp();
-            mUserDisp.Id = mUser.Id;
-            mUserDisp.UserName = mUser.UserName;
-            mUserDisp.Email = mUser.Email;
-            mUserDisp.StartDate = mUser.StartDate;
-
-            return mUserDisp;
-        }
-
-        private int PersonCheck(MUserDisp mUserDisp)
+        public int PersonCheck(MUserDisp mUserDisp)
         {
             int retInt = 0;
-            MUser user = _context.MUser.Where(u => u.Id == mUserDisp.Id && u.status == 1).FirstOrDefault();
-            string password = getHasshedPassword(mUserDisp.Password, getSalt(user.Id));
-            string passwordAssert = getHasshedPassword(mUserDisp.PasswordAssert, getSalt(user.Id));
-            if (!user.Password.Equals(password) || !user.Password.Equals(passwordAssert))
+
+            UserModel model = new UserModel(_context);
+            MUser currentUser = model.GetUserById(mUserDisp.Id);
+            string password = model.getHasshedPassword(mUserDisp.Password, model.getSalt(currentUser.Id));
+            string passwordAssert = model.getHasshedPassword(mUserDisp.PasswordAssert, model.getSalt(currentUser.Id));
+            if (!currentUser.Password.Equals(password) || !currentUser.Password.Equals(passwordAssert))
             {
                 ModelState.AddModelError(nameof(MUserDisp.Password), "本人確認が取れません");
                 retInt++;
             }
             return retInt;
         }
-
-        private byte[] getSalt(int id)
-        {
-            byte[] salt = null;
-            // パスワードハッシュ対応有無で処理分岐
-            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-            string HashAndSalt = configuration["HashAndSalt"];
-            if (!HashAndSalt.Equals("use"))
-            {
-                return salt;
-            }
-            try
-            {
-                MUser mUser = _context.MUser.Where(u => u.Id == id).FirstOrDefault();
-                MSalt mSalt = _context.MSalt.Where(s => s.UserId == mUser.UserId).FirstOrDefault();
-                salt = mSalt.salt;
-            }
-            catch (Exception)
-            {
-                return salt;
-            }
-
-            return salt;
-        }
-
-        private string getHasshedPassword(string passwordStr, byte[] salt)
-        {
-            // パスワードハッシュ対応有無で処理分岐
-            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-            string HashAndSalt = configuration["HashAndSalt"];
-            if (!HashAndSalt.Equals("use"))
-            {
-                return passwordStr;
-            }
-            if (salt == null)
-            {
-                return passwordStr;
-            }
-            byte[] hash = KeyDerivation.Pbkdf2(
-              passwordStr,
-              salt,
-              prf: KeyDerivationPrf.HMACSHA256,
-              iterationCount: 10000,  // 反復回数
-              numBytesRequested: 256 / 8);
-            return System.Text.Encoding.UTF8.GetString(hash);
-        }
-
     }
 }

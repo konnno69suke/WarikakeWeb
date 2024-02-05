@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using WarikakeWeb.Data;
-using WarikakeWeb.Models;
+using WarikakeWeb.Entities;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -41,8 +42,8 @@ namespace WarikakeWeb.Controllers
                 return View();
             }
 
-            CsvMigration csvMigration = new CsvMigration(_context);
-            List<CsvMigration> csvMigrations = csvMigration.GetExportData((int)GroupId);
+            WCsvMigration csvMigration = new WCsvMigration(_context);
+            List<WCsvMigration> csvMigrations = csvMigration.GetExportData((int)GroupId);
 
             Boolean hasQuote = export.hasDoubleQuote.Equals("has") ? true : false;
             string csvString = csvMigration.GetExportString(csvMigrations, hasQuote);

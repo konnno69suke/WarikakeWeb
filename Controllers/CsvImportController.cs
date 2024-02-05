@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic.FileIO;
 using WarikakeWeb.Data;
-using WarikakeWeb.Logic;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -88,7 +89,7 @@ namespace WarikakeWeb.Controllers
                                 continue;
                             }
 
-                            CsvMigration csv = new CsvMigration();
+                            WCsvMigration csv = new WCsvMigration();
                             csv.status = 0;
                             csv.inputDate = fields[0];
                             csv.buyDate = fields[1];
@@ -110,7 +111,7 @@ namespace WarikakeWeb.Controllers
                             csv.UpdatedDate = currDate;
                             csv.UpdateUser = UserId.ToString();
                             csv.UpdatePg = "ImportInsert";
-                            _context.CsvMigration.Add(csv);
+                            _context.WCsvMigration.Add(csv);
                             impCnt++;
                         }
                     }
@@ -153,7 +154,7 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            int migCnt = _context.CsvMigration.Where(c => c.status == 0).Count();
+            int migCnt = _context.WCsvMigration.Where(c => c.status == 0).Count();
             if(migCnt > 0)
             {
                 ViewBag.MigCnt = "データ移行予定件数は" + migCnt + "件です。";
@@ -186,11 +187,9 @@ namespace WarikakeWeb.Controllers
             int status = (int)statusEnum.移行;
             int migCnt = 0;
             int skpCnt = 0;
-            ModelLogic modelLogic = new ModelLogic(_context);
+            WarikakeModel model = new WarikakeModel(_context);
 
-
-
-            List<CsvMigration> csvList = _context.CsvMigration.Where(c => c.status == 0).ToList();
+            List<WCsvMigration> csvList = _context.WCsvMigration.Where(c => c.status == 0).ToList();
             foreach (var csv in csvList)
             {
                 // 同一データ重複チェック
@@ -198,7 +197,7 @@ namespace WarikakeWeb.Controllers
                 if (costChk != null && costChk.CostStatus != (int)statusEnum.削除)
                 {
                     csv.status = 9;
-                    _context.CsvMigration.Update(csv);
+                    _context.WCsvMigration.Update(csv);
                     _context.SaveChanges();
 
                     skpCnt++;
@@ -228,7 +227,7 @@ namespace WarikakeWeb.Controllers
                 _context.TCost.Add(cost);
 
                 _context.SaveChanges();
-                TCost currCost = modelLogic.GetCurrentCost((int)UserId, currTime, currPg);
+                TCost currCost = model.GetCurrentCost((int)UserId, currTime, currPg);
 
                 try
                 {
@@ -335,7 +334,7 @@ namespace WarikakeWeb.Controllers
                     csv.UpdatedDate = currTime;
                     csv.UpdateUser = UserId.ToString();
                     csv.UpdatePg = currPg;
-                    _context.CsvMigration.Update(csv);
+                    _context.WCsvMigration.Update(csv);
 
                     _context.SaveChanges();
                     migCnt++;

@@ -1,17 +1,13 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Xml.Linq;
 using WarikakeWeb.Data;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -28,7 +24,6 @@ namespace WarikakeWeb.Controllers
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
-            string GroupName = HttpContext.Session.GetString("GroupName");
             if (UserId == null || GroupId == null)
             {
                 // セッション切れ
@@ -36,15 +31,14 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            HomeDisp homeDisp = new HomeDisp();
-            MUser user = _context.MUser.FirstOrDefault(u => u.UserId == UserId && u.status == 1);
-            homeDisp.UserId = UserId;
-            homeDisp.UserName = user.UserName;
-            homeDisp.GroupId = GroupId;
-            homeDisp.GroupName = GroupName;
+            // 表示情報をDB検索
+            UserModel model = new UserModel(_context);
+            MUser user = model.GetUserByUserId((int)UserId);
+            GroupModel gModel = new GroupModel(_context);
+            MGroup group = gModel.GetGroupByGroupId((int)GroupId);
 
-            MGroup group = _context.MGroup.FirstOrDefault(g => g.GroupId == GroupId && g.status == 1);
-            homeDisp.GroupUserId = group.UserId;
+            // 画面表示向けに編集
+            HomeDisp homeDisp = gModel.GetHomeDisp(user, group);
 
             return View(homeDisp);
         }
@@ -69,6 +63,7 @@ namespace WarikakeWeb.Controllers
 
 
             // パスワードのハッシュ化とソルト使用
+            UserModel model = new UserModel(_context);
             IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
             string HashAndSalt = configuration["HashAndSalt"];
             string password = null;
@@ -88,14 +83,14 @@ namespace WarikakeWeb.Controllers
                     ModelState.AddModelError("", "ユーザー名またはパスワードが間違っています。");
                     return View();
                 }
-                password = getHasshedPassword(login.Password, salt);
+                password = model.getHasshedPassword(login.Password, salt);
             }
             else
             {
                 // パスワードハッシュを行わない場合
                 password = login.Password;
             }
-            MUser user = _context.MUser.Where(u => u.Email == login.EMail && u.Password == password && u.status == 1).FirstOrDefault();
+            MUser user = model.GetUserByEmailPassWord(login.EMail, password);
 
             if (user == null)
             {
@@ -120,13 +115,15 @@ namespace WarikakeWeb.Controllers
             HttpContext.Session.SetInt32("UserId", user.UserId);
 
             // 単一グループに属している場合はグループ選択画面での処理を先回りして行い、グループ選択画面を飛ばす
-            List<MMember> members = _context.MMember.Where(m => m.UserId == user.UserId && m.status == 1).ToList();
+            MemberModel mModel = new MemberModel(_context);
+            List<MMember> members = mModel.GetMemberListByUserId(user.UserId);
             if (members.Count == 1)
             {
                 foreach (MMember member in members)
                 {
                     HttpContext.Session.SetInt32("GroupId", member.GroupId);
-                    MGroup group = _context.MGroup.FirstOrDefault(m => m.GroupId == member.GroupId);
+                    GroupModel gModel = new GroupModel(_context);
+                    MGroup group = gModel.GetGroupByGroupId(member.GroupId);
                     HttpContext.Session.SetString("GroupName", group.GroupName);
 
                     Serilog.Log.Information($"GroupId:{member.GroupId}, UserId:{user.UserId}");
@@ -148,20 +145,19 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId: notyet, UserId:{UserId}");
 
-            HomeDisp homeDisp = new HomeDisp();
-            homeDisp.UserId = (int)UserId;
-            MUser user = _context.MUser.FirstOrDefault(u => u.UserId == UserId);
-            homeDisp.UserName = user.UserName;
+            // DB検索
+            UserModel model = new UserModel(_context);
+            MUser mUser = model.GetUserByUserId((int)UserId);
+            // 画面表示向けに編集
+            HomeDisp homeDisp = model.GetHomeDisp(mUser, (int)UserId);
 
-            List<MGroup> groups = _context.Database.SqlQuery<MGroup>($@"
-                    select mg.* 
-                    from MGroup mg inner join MMember mm on mg.GroupId = mm.GroupId
-                    where mm.UserId = {UserId}
-                    and mg.status = 1 and mm.status = 1
-                    order by mg.GroupId").ToList();
-            ViewBag.Groups = new SelectList(groups.Select(g => new { Id = g.GroupId, Name = g.GroupName }), "Id", "Name");
+            // グループのドロップダウンを取得
+            GroupModel gModel = new GroupModel(_context);
+            SelectList groupSelect = gModel.GetGroupSelect((int) UserId);
 
-            return View();
+            ViewBag.Groups = groupSelect;
+
+            return View(homeDisp);
         }
 
         [HttpPost]
@@ -176,16 +172,18 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId: notyet, UserId:{UserId}");
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 ModelState.AddModelError("", "グループが取得できません");
                 return View();
             }
 
-            MGroup group = _context.MGroup.FirstOrDefault(g => g.GroupId == homeDisp.GroupId);
-            if (group != null)
+            GroupModel model = new GroupModel(_context);
+            MGroup group = model.GetGroupByGroupId((int)homeDisp.GroupId);
+            
+            if (group == null)
             {
-                return View();
+                return NotFound();
             }
 
             // グループをセット
@@ -217,37 +215,6 @@ namespace WarikakeWeb.Controllers
         {
 
             return View();
-        }
-
-        // ソルトを取得。取得できない場合はnull
-        private byte[] getSalt(int id)
-        {
-            byte[] salt = null;
-            try
-            {
-                salt = _context.Database.SqlQuery<byte[]>(@$"
-                        select ms.salt from msalt ms 
-                        inner join muser mu on ms.userid = mu.userid
-                        where ms.status = 1 and mu.status = 1 and mu.id = {id}").FirstOrDefault();
-            }
-            catch (SqlException)
-            {
-                return salt;
-            }
-
-            return salt;
-        }
-
-        // ハッシュ化したパスワードを取得
-        private string getHasshedPassword(string passwordStr, byte[] salt)
-        {
-            byte[] hash = KeyDerivation.Pbkdf2(
-              passwordStr,
-              salt,
-              prf: KeyDerivationPrf.HMACSHA256,
-              iterationCount: 10000,  // 反復回数
-              numBytesRequested: 256 / 8);
-            return System.Text.Encoding.UTF8.GetString(hash);
         }
     }
 }
