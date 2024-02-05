@@ -98,7 +98,7 @@ namespace WarikakeWeb.Controllers
         // POST: MUsers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind("UserName,Password,PasswordAssert,Email")] MUserDisp mUserDisp)
+        public ActionResult Create(MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -123,7 +123,7 @@ namespace WarikakeWeb.Controllers
             {
                 // 登録処理
                 UserModel model = new UserModel(_context);
-                model.CreateLogic(mUserDisp, (int)UserId);
+                model.CreateLogic((int)GroupId, (int)UserId, mUserDisp);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -165,7 +165,7 @@ namespace WarikakeWeb.Controllers
         // POST: MUsers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int? id, [Bind("Id,UserName,Password,PasswordAssert,NewPassword,Email,StartDate")] MUserDisp mUserDisp)
+        public ActionResult Edit(int? id, MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -219,7 +219,7 @@ namespace WarikakeWeb.Controllers
         }
 
         // GET: MUsers/Delete/5
-        public ActionResult Delete(int? id)
+        public ActionResult Delete(int? Id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId"); 
@@ -230,14 +230,14 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id == null)
+            if (Id == null)
             {
                 return NotFound();
             }
 
             // DB検索
             UserModel model = new UserModel(_context);
-            MUser mUser = model.GetUserById((int)id);
+            MUser mUser = model.GetUserById((int)Id);
             if (mUser == null)
             {
                 return null;
@@ -251,7 +251,7 @@ namespace WarikakeWeb.Controllers
         // POST: MUsers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int? id, [Bind("Id,Password,PasswordAssert")] MUserDisp mUserDisp)
+        public ActionResult DeleteConfirmed(int? Id, MUserDisp mUserDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -262,7 +262,7 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id == null)
+            if (Id == null)
             {
                 return NotFound();
             }
@@ -277,12 +277,18 @@ namespace WarikakeWeb.Controllers
             {
                 return View(mUserDisp);
             }
+            // 未精算チェック
+            if (0 < UnSettledCheck((int)GroupId, mUserDisp))
+            {
+                return View(mUserDisp);
+            }
+
 
             try
             {
                 // 更新処理
                 UserModel model = new UserModel(_context);
-                model.StatusChangeLogic((int)UserId, (int)id);
+                model.StatusChangeLogic((int)GroupId, (int)UserId, (int)Id);
                 _context.SaveChanges();
             }
             catch (Exception ex)
@@ -338,6 +344,22 @@ namespace WarikakeWeb.Controllers
             if (!currentUser.Password.Equals(password) || !currentUser.Password.Equals(passwordAssert))
             {
                 ModelState.AddModelError(nameof(MUserDisp.Password), "本人確認が取れません");
+                retInt++;
+            }
+            return retInt;
+        }
+
+        public int UnSettledCheck(int GroupId, MUserDisp mUserDisp)
+        {
+            int retInt = 0;
+
+            UserModel model = new UserModel(_context);
+            MUser mUser = model.GetUserById(mUserDisp.Id);
+            WarikakeModel wModel = new WarikakeModel(_context);
+            int cCnt = wModel.GetUserUnSettledCostCount(GroupId, mUser.UserId);
+            if(cCnt > 0)
+            {
+                ModelState.AddModelError(nameof(MUserDisp.Password), "未精算の支払が残っています");
                 retInt++;
             }
             return retInt;

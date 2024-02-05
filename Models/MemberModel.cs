@@ -13,7 +13,7 @@ namespace WarikakeWeb.Models
         {
             _context = context;
         }
-
+        /*
         // 所有グループのメンバーを一覧取得
         public List<MMemberDisp> GetGroupMemberList(int UserId)
         {
@@ -34,7 +34,7 @@ namespace WarikakeWeb.Models
             MMember mMember = _context.MMember.FirstOrDefault<MMember>(m => m.Id == id && m.status == 1);
             return mMember;
         }
-
+        
         // グループIDで指定されたメンバーリストを取得
         public List<MMember> GetMemberByGroupId(int GroupId)
         {
@@ -48,6 +48,14 @@ namespace WarikakeWeb.Models
             List<MMember> members = _context.MMember.Where(m => m.UserId == UserId && m.status == 1).ToList();
             return members;
         }
+
+        // グループIDとユーザーIDで指定されたメンバーを取得
+        public MMember GetMemberByGroupUser(int GroupId, int UserId)
+        {
+            MMember mMember = _context.MMember.Where(m => m.GroupId == GroupId && m.UserId == UserId).FirstOrDefault();
+            return mMember;
+        }
+
 
         // 登録処理
         public void CreateLogic(MMemberDisp mMemberDisp, int UserId)
@@ -97,5 +105,6 @@ namespace WarikakeWeb.Models
                 and mm.status = 1 and mg.status = 1 and mu.status = 1").FirstOrDefault();
             return mMemberDisp;
         }
+        */
     }
 }

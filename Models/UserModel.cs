@@ -17,7 +17,7 @@ namespace WarikakeWeb.Models
             _context = context;
         }
 
-        // グループで指定したユーザーを取得
+        // 指定したグループのユーザー一覧を取得
         public List<MUser> GetGroupUsers(int GroupId)
         {
 
@@ -54,8 +54,15 @@ namespace WarikakeWeb.Models
             return mUser;
         }
 
+        // グループIDとユーザーIDで指定されたメンバーを取得
+        public MMember GetMemberByGroupUser(int GroupId, int UserId)
+        {
+            MMember mMember = _context.MMember.Where(m => m.GroupId == GroupId && m.UserId == UserId).FirstOrDefault();
+            return mMember;
+        }
+
         // 新規登録処理
-        public void CreateLogic(MUserDisp mUserDisp, int UserId)
+        public void CreateLogic(int GroupId, int UserId, MUserDisp mUserDisp)
         {
             // ユーザー登録
             DateTime dateTime = DateTime.Now;
@@ -123,6 +130,21 @@ namespace WarikakeWeb.Models
                 _context.Add(mUser);
             }
 
+            // メンバーにも登録
+            MMember mMember = new MMember();
+            mMember.status = 1;
+            mMember.GroupId = GroupId;
+            mMember.UserId = newUserId;
+            mMember.CreatedDate = dateTime;
+            mMember.CreateUser = UserId.ToString();
+            mMember.CreatePg = currPg;
+            mMember.UpdatedDate = dateTime;
+            mMember.UpdateUser = UserId.ToString();
+            mMember.UpdatePg = currPg;
+            Serilog.Log.Information($"SQL param: MMember:{mMember.ToString()}");
+            _context.Add(mMember);
+            _context.SaveChanges();
+
             _context.SaveChanges();
         }
 
@@ -131,24 +153,19 @@ namespace WarikakeWeb.Models
         {
             DateTime currDate = DateTime.Now;
             string currPg = "MUsersUpdate";
-
-            // パスワードハッシュ対応有無で処理分岐
-            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
-            string HashAndSalt = configuration["HashAndSalt"];
-            string password = null;
-            if (HashAndSalt.Equals("use"))
+            UserModel model = new UserModel(_context);
+            string password;
+            if (!mUserDisp.NewPassword.IsNullOrEmpty())
             {
-                // パスワードをハッシュ化
-                if (!mUserDisp.NewPassword.IsNullOrEmpty())
-                {
-                    UserModel model = new UserModel(_context);
-                    password = model.getHasshedPassword(mUserDisp.NewPassword, model.getSalt(mUserDisp.Id));
-                }
+                // パスワード変更の場合
+                password = model.getHasshedPassword(mUserDisp.NewPassword, model.getSalt(mUserDisp.Id));
             }
             else
             {
-                password = mUserDisp.Password;
+                // パスワード変更なしの場合
+                password = model.getHasshedPassword(mUserDisp.Password, model.getSalt(mUserDisp.Id));
             }
+
             MUser existingUser = GetUserById(Id);
             existingUser.UserName = mUserDisp.UserName;
             existingUser.Password = password;
@@ -160,7 +177,7 @@ namespace WarikakeWeb.Models
             _context.Update(existingUser);
         }
         // ステータス更新処理
-        public void StatusChangeLogic(int UserId, int Id)
+        public void StatusChangeLogic(int GroupId, int UserId, int Id)
         {
             string currPg = "MUsersDelete";
             DateTime currTime = DateTime.Now;
@@ -187,6 +204,15 @@ namespace WarikakeWeb.Models
                 _context.MSalt.Update(mSalt);
             }
 
+            // ユーザーの論理削除に伴いメンバー情報も更新
+            MMember currMember = GetMemberByGroupUser(GroupId, currUser.UserId);
+
+            currMember.status = (int)statusEnum.削除;
+            currMember.UpdatedDate = currTime;
+            currMember.UpdateUser = UserId.ToString();
+            currMember.UpdatePg = currPg;
+            Serilog.Log.Information($"SQL param: MUser: {currMember.ToString()}");
+            _context.MMember.Update(currMember);
         }
 
 

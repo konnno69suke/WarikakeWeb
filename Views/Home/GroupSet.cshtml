@@ -1,22 +1,22 @@
 ﻿@model WarikakeWeb.ViewModel.HomeDisp
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "グループ選択";
 }
-<h1>Login</h1>
+<h1>グループ選択</h1>
 
-<h4>Warikake</h4>
+<h4>グループ</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="GroupSet">
             @Html.DisplayNameFor(model => model.UserName)
             <div class="form-group">
-                <label asp-for="GroupId" class="control-label"></label>
+                <label asp-for="GroupName" class="control-label"></label>
                 @Html.DropDownList("GroupId", ViewBag.Groups as SelectList, new { @class = "form-control" })
                 <span asp-validation-for="GroupId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="GroupSet" class="btn btn-primary" />
+                <input type="submit" value="選択" class="btn btn-primary" />
             </div>
         </form>
     </div>

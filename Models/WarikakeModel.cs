@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
 using WarikakeWeb.Entities;
 using WarikakeWeb.ViewModel;
@@ -295,6 +297,28 @@ namespace WarikakeWeb.Models
             return currCost;
         }
 
+        // グループでのその種別の使用実績を取得する
+        public int GetGenreUsedCount(int GroupId, int GenreId)
+        {
+            Serilog.Log.Information($"SQL param:{GroupId}, {GroupId}, {GenreId}");
+            int count = _context.TCost.Where(c => c.GroupId == GroupId && c.GenreId == GenreId && c.status != 9).Count();
+            return count;
+        }
+
+        // グループでそのユーザーの未精算件数を取得する
+        public int GetUserUnSettledCostCount(int GroupId, int UserId)
+        {
+            Serilog.Log.Information($"SQL param:{GroupId}, {UserId}, {UserId}");
+            int count = _context.Database.SqlQuery<UnSettledCount>($@"select count(*) count from tcost tc 
+                    inner join tpay tp on tc.costid = tp.costid 
+                    inner join trepay tr on tc.costid = tr.costid
+                    where tc.groupid = {GroupId} and (tp.UserId = {UserId} or tr.UserId = {UserId})
+                    and tc.status <= 1 and tp.status <= 1 and tr.status <= 1").FirstOrDefault().count;
+            return count;
+        }
+
+
+        // 新規登録
         public void CreateLogic(WarikakeDisp input, int GroupId, int UserId)
         {
             DateTime currDate = DateTime.Now;
@@ -745,7 +769,7 @@ namespace WarikakeWeb.Models
             // 精算指示の文字列作成
             List<string> messageList = new List<string>();
 
-            WarikakeProcess  warikakeProcess = GetWarikakeProcess(warikakeQueries);
+            WarikakeProcess warikakeProcess = GetWarikakeProcess(warikakeQueries);
             foreach (WarikakeUserProcess plsUsr in warikakeProcess.plusUsers)
             {
                 messageList.Add($"{plsUsr.UserName}は合計{plsUsr.processAmount}円を支払うこと。");
@@ -778,5 +802,14 @@ namespace WarikakeWeb.Models
             }
             return warikakeProcess;
         }
+    }
+    // 件数だけをカウントするSQLから値を取得するためだけのクラス
+    public class UnSettledCount
+    {
+        public int count
+        {
+            get; set;
+        }
+
     }
 }

@@ -158,7 +158,7 @@ namespace WarikakeWeb.Controllers
         }
 
         // GET: MGenres/Delete/5
-        public ActionResult Delete(int? id)
+        public ActionResult Delete(int? Id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -169,14 +169,14 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id == null)
+            if (Id == null)
             {
                 return NotFound();
             }
 
             // 検索処理
             GenreModel model = new GenreModel(_context);
-            var mGenre = model.GetGenreById((int)id);
+            var mGenre = model.GetGenreById((int)Id);
             if (mGenre == null)
             {
                 return NotFound();
@@ -191,7 +191,7 @@ namespace WarikakeWeb.Controllers
         // POST: MGenres/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int? id)
+        public ActionResult DeleteConfirmed(int? Id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -202,17 +202,22 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id == null)
+            if (Id == null)
             {
                 return NotFound();
             }
 
             // 検索処理
             GenreModel model = new GenreModel(_context);
-            var mGenre = model.GetGenreById((int)id);
-            if (mGenre != null)
+            var mGenre = model.GetGenreById((int)Id);
+
+            WarikakeModel wModel = new WarikakeModel(_context);
+            int gCnt = wModel.GetGenreUsedCount((int)GroupId, mGenre.GenreId);
+            if(gCnt > 0)
             {
-                return NotFound();
+                ModelState.AddModelError(nameof(MGenreDisp.Id), "この種別は既に使用されています");
+                MGenreDisp mGenreDisp = model.GetGenreDisp(mGenre);
+                return View(mGenreDisp);
             }
 
             try
