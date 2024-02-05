@@ -1,56 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Numerics;
-using System.Text;
 using WarikakeWeb.Data;
-using WarikakeWeb.Logic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using WarikakeWeb.Entities;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Models
 {
-    public class SubscribeQuery
+    public class SubscribeModel
     {
         WarikakeWebContext _context;
 
-        public SubscribeQuery()
-        {
-
-        }
-
-        public SubscribeQuery(WarikakeWebContext context)
+        public SubscribeModel(WarikakeWebContext context)
         {
             _context = context;
         }
 
-        public int SubscribeId { get; set; }
-        [Display(Name = "Cost Title")]
-        public string? CostTitle { get; set; }
-        public int GroupId { get; set; }
-        [Display(Name = "Group Name")]
-        public string? GroupName { get; set; }
-        public int GenreId { get; set; }
-        [Display(Name = "Genre Name")]
-        public string? GenreName { get; set; }
-        [Display(Name = "status")]
-        public int status { get; set; }
-        public int CostStatus { get; set; }
-        [Display(Name = "Cost Amount")]
-        public int CostAmount { get; set; }
-        public int PayId { get; set; }
-        public int PayUserId { get; set; }
-        [Display(Name = "Pay User Name")]
-        public string PayUserName { get; set; }
-        [Display(Name = "Pay Amount")]
-        public int PayAmount { get; set; }
-        public int RepayId { get; set; }
-        public int RepayUserId { get; set; }
-        [Display(Name = "Repay User Name")]
-        public string RepayUserName { get; set; }
-        [Display(Name = "Repay Amount")]
-        public int RepayAmount { get; set; }
-        public DateTime? LastSubscribedDate { get; set; }
-        public int? LastCostId { get; set; }
 
         // 指定された定期支払情報を取得
         public List<SubscribeQuery> GetOneSubscribeQueries(int GroupId, int SubscribeId)
@@ -98,6 +62,14 @@ namespace WarikakeWeb.Models
             return subscribeQueries;
         }
 
+        // 一括処理等のループ内でたった今登録したTCostSubscribeレコードを取得する
+        public TCostSubscribe GetCurrentSubscribe(int UserId, DateTime currTime, String pg)
+        {
+            TCostSubscribe currSubscribe = _context.TCostSubscribe.Where(c => c.UpdateUser.Equals(UserId.ToString()) && c.UpdatedDate.Equals(currTime) && c.UpdatePg.Equals(pg)).OrderByDescending(a => a.SubscribeId).FirstOrDefault();
+
+            return currSubscribe;
+        }
+
         // 登録処理
         public string createCostData(int SubscribeId, DateTime date, int UserId)
         {
@@ -107,7 +79,7 @@ namespace WarikakeWeb.Models
             DateTime currDate = DateTime.Now;
             string currUser = UserId.ToString();
             string currPg = "SubscribeCreate";
-            ModelLogic modelLogic = new ModelLogic(_context);
+            WarikakeModel model = new WarikakeModel(_context);
 
             TCostSubscribe costBase = _context.TCostSubscribe.Where(c => c.SubscribeId == SubscribeId && c.status == 1).FirstOrDefault();
             TCost cost = new TCost();
@@ -129,7 +101,7 @@ namespace WarikakeWeb.Models
             _context.TCost.Add(cost);
 
             _context.SaveChanges();
-            TCost currCost = modelLogic.GetCurrentCost(int.Parse(currUser), currDate, currPg);
+            TCost currCost = model.GetCurrentCost(int.Parse(currUser), currDate, currPg);
             try
             {
                 List<TPaySubscribe> payBaseList = _context.TPaySubscribe.Where(p => p.SubscribeId == SubscribeId && p.status == 1).ToList();
@@ -202,7 +174,6 @@ namespace WarikakeWeb.Models
 
             DateTime currDate = DateTime.Now;
             string currPg = "SubscribeInsert";
-            ModelLogic modelLogic = new ModelLogic(_context);
             int payId = 0;
             int repayId = 0;
 
@@ -211,7 +182,7 @@ namespace WarikakeWeb.Models
             if (input.GenreId == 0)
             {
                 updStatus = (int)statusEnum.手動精算;
-                updGenreName = (statusEnum.手動精算).ToString();
+                updGenreName = statusEnum.手動精算.ToString();
             }
             else
             {
@@ -237,7 +208,7 @@ namespace WarikakeWeb.Models
             _context.TCostSubscribe.Add(cost);
 
             _context.SaveChanges();
-            TCostSubscribe currSubscribe = modelLogic.GetCurrentSubscribe((int)UserId, currDate, currPg);
+            TCostSubscribe currSubscribe = GetCurrentSubscribe(UserId, currDate, currPg);
             try
             {
                 foreach (SubscribePayDisp inputPay in input.Pays)
@@ -279,7 +250,7 @@ namespace WarikakeWeb.Models
                 }
                 TDateSubscribe datesub = new TDateSubscribe();
                 datesub.status = updStatus;
-                datesub.UserId = (int)UserId;
+                datesub.UserId = UserId;
                 datesub.SubscribeId = currSubscribe.SubscribeId;
                 datesub.m1 = input.dateSubscribe.m1;
                 datesub.m2 = input.dateSubscribe.m2;
@@ -414,10 +385,10 @@ namespace WarikakeWeb.Models
         }
 
 
-        public void UpdateLogic(SubscribeDisp input, int UserId, int SubscribeId)
+        public void UpdateLogic(SubscribeDisp input, int GroupId, int UserId, int SubscribeId)
         {
 
-            Serilog.Log.Information($"SQL param: SubscribeDisp:{input.ToString()}, UserId:{UserId}, SubscribeId:{SubscribeId}");
+            Serilog.Log.Information($"SQL param: SubscribeDisp:{input.ToString()}, GroupId:{GroupId}, UserId:{UserId}, SubscribeId:{SubscribeId}");
 
             DateTime dateTime = DateTime.Now;
 
@@ -425,7 +396,7 @@ namespace WarikakeWeb.Models
             existingCost.SubscribeId = SubscribeId;
 
             existingCost.CostTitle = input.CostTitle;
-            existingCost.GroupId = (int)GroupId;
+            existingCost.GroupId = GroupId;
             existingCost.GenreId = input.GenreId;
             MGenre genre = _context.MGenre.Where(g => g.GenreId == input.GenreId).FirstOrDefault();
             existingCost.GenreName = genre.GenreName;
@@ -464,7 +435,7 @@ namespace WarikakeWeb.Models
                 _context.Update(existingRepay);
             }
             TDateSubscribe existingDate = _context.TDateSubscribe.FirstOrDefault(d => d.SubscribeId == SubscribeId);
-            existingDate.UserId = (int)UserId;
+            existingDate.UserId = UserId;
             existingDate.m1 = input.dateSubscribe.m1;
             existingDate.m2 = input.dateSubscribe.m2;
             existingDate.m3 = input.dateSubscribe.m3;
@@ -528,75 +499,7 @@ namespace WarikakeWeb.Models
 
             _context.SaveChanges();
         }
-    }
 
-
-    public class SubscribeDisp
-    {
-        public bool isChecked { get; set; }
-        public int SubscribeId { get; set; }
-        [Display(Name = "備考")]
-        public string? CostTitle { get; set; }
-        public int GroupId { get; set; }
-        [Display(Name = "グループ")]
-        public string? GroupName { get; set; }
-        [Display(Name = "種別")]
-        public int GenreId { get; set; }
-        [Display(Name = "種別")]
-        public string? GenreName { get; set; }
-        [Display(Name = "登録状態")]
-        public int status { get; set; }
-        [Display(Name = "清算状況")]
-        public string? statusName { get; set; }
-        public int CostStatus { get; set; }
-        [Display(Name = "支払額")]
-        [Range(1, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int CostAmount { get; set; }
-        [Display(Name = "支払額")]
-        public string? CostDisp { get; set; }
-        public List<SubscribePayDisp> Pays { get; set; }
-        public List<SubscribeRepayDisp> Repays { get; set; }
-        public bool isAllMonth { get; set; }
-        public string weekOrDay { get; set; }
-        [Display(Name = "最終仮登録日")]
-        public DateTime? LastSubscribedDate { get; set; }
-        public int? LastCostId { get; set; }
-        public TDateSubscribe? dateSubscribe { get; set; }
-
-        public SubscribeDisp()
-        {
-            isChecked = true;
-            Pays = new List<SubscribePayDisp>();
-            Repays = new List<SubscribeRepayDisp>();
-            dateSubscribe = new TDateSubscribe();
-        }
-
-
-        //ログ出力用にオーバーライド
-        public string ToString()
-        {
-            FormattableString fs = $"Wari :{isChecked}, {SubscribeId}, {CostTitle}, {GroupId}, {GroupName}, {GenreId}, {GenreName}, {status}, {statusName}, {CostStatus}, {CostAmount}, {CostDisp}, {isAllMonth}, {weekOrDay}, {LastSubscribedDate}, {LastCostId}";
-            StringBuilder sb = new StringBuilder();
-            sb.Append(fs);
-            for (int i = 0; i < Pays.Count; i++)
-            {
-                sb.Append($" Pays({i}) :{Pays[i].PayId}, {Pays[i].PayUserId}, {Pays[i].PayUserOn}, {Pays[i].PayUserName}, {Pays[i].PayAmount}, {Pays[i].PayDisp}");
-            }
-            for (int j = 0; j < Repays.Count; j++)
-            {
-                sb.Append($" Reps({j}) :{Repays[j].RepayId}, {Repays[j].RepayUserId}, {Repays[j].RepayUserOn}, {Repays[j].RepayUserName}, {Repays[j].RepayAmount}, {Repays[j].RepayDisp}");
-            }
-            sb.Append($" TDateSubscribe :{dateSubscribe.Id}, {dateSubscribe.status}, {dateSubscribe.SubscribeId}, {dateSubscribe.UserId}, " +
-                $"{dateSubscribe.m1}, {dateSubscribe.m2}, {dateSubscribe.m3}, {dateSubscribe.m4}, {dateSubscribe.m5}, {dateSubscribe.m6}, {dateSubscribe.m7}, {dateSubscribe.m8}, {dateSubscribe.m9}, {dateSubscribe.m10}, {dateSubscribe.m11}, {dateSubscribe.m12}, " +
-                $"{dateSubscribe.r1}, {dateSubscribe.r2}, {dateSubscribe.r3}, {dateSubscribe.r4}, {dateSubscribe.r5}, " +
-                $"{dateSubscribe.w1}, {dateSubscribe.w2}, {dateSubscribe.w3}, {dateSubscribe.w4}, {dateSubscribe.w5}, {dateSubscribe.w6}, {dateSubscribe.w7}, " +
-                $"{dateSubscribe.d1}, {dateSubscribe.d2}, {dateSubscribe.d3}, {dateSubscribe.d4}, {dateSubscribe.d5}, {dateSubscribe.d6}, {dateSubscribe.d7}, {dateSubscribe.d8}, {dateSubscribe.d9}, {dateSubscribe.d10}, " +
-                $"{dateSubscribe.d11}, {dateSubscribe.d12}, {dateSubscribe.d13}, {dateSubscribe.d14}, {dateSubscribe.d15}, {dateSubscribe.d16}, {dateSubscribe.d17}, {dateSubscribe.d18}, {dateSubscribe.d19}, {dateSubscribe.d20}, " +
-                $"{dateSubscribe.d21}, {dateSubscribe.d22}, {dateSubscribe.d23}, {dateSubscribe.d24}, {dateSubscribe.d25}, {dateSubscribe.d26}, {dateSubscribe.d27}, {dateSubscribe.d28}, {dateSubscribe.d29}, {dateSubscribe.d30}, " +
-                $"{dateSubscribe.d31}");
-
-            return sb.ToString();
-        }
 
         // 定期支払の一覧表示処理
         public List<SubscribeDisp> GetSubscribeDisps(List<SubscribeQuery> subscribeQueries)
@@ -670,7 +573,7 @@ namespace WarikakeWeb.Models
                 SubscribePayDisp payDisp = new SubscribePayDisp();
                 payDisp.PayId = item.PayId;
                 payDisp.PayUserId = item.PayUserId;
-                payDisp.PayUserOn = (item.PayAmount != 0 ? true : false);
+                payDisp.PayUserOn = item.PayAmount != 0 ? true : false;
                 payDisp.PayUserName = item.PayUserName;
                 payDisp.PayAmount = item.PayAmount;
                 payDisp.PayDisp = item.PayAmount.ToString("C0", new CultureInfo("ja-JP"));
@@ -679,7 +582,7 @@ namespace WarikakeWeb.Models
                 SubscribeRepayDisp repayDisp = new SubscribeRepayDisp();
                 repayDisp.RepayId = item.RepayId;
                 repayDisp.RepayUserId = item.RepayUserId;
-                repayDisp.RepayUserOn = (item.RepayAmount != 0 ? true : false);
+                repayDisp.RepayUserOn = item.RepayAmount != 0 ? true : false;
                 repayDisp.RepayUserName = item.RepayUserName;
                 repayDisp.RepayAmount = item.RepayAmount;
                 repayDisp.RepayDisp = item.RepayAmount.ToString("C0", new CultureInfo("ja-JP"));
@@ -689,15 +592,15 @@ namespace WarikakeWeb.Models
             return subscribeDisp;
         }
 
-        public SubscribeDisp GetBlankSubscribeDisp(List<MUser> users, int UserId)
+        public SubscribeDisp GetBlankSubscribeDisp(List<MUser> users, int GroupId, int UserId)
         {
             SubscribeDisp input = new SubscribeDisp();
-            input.GroupId = (int)GroupId;
+            input.GroupId = GroupId;
             foreach (MUser user in users)
             {
                 SubscribePayDisp inputPay = new SubscribePayDisp();
                 inputPay.PayUserId = user.UserId;
-                inputPay.PayUserOn = (user.UserId == UserId ? true : false);
+                inputPay.PayUserOn = user.UserId == UserId ? true : false;
                 inputPay.PayUserName = user.UserName;
                 input.Pays.Add(inputPay);
                 SubscribeRepayDisp inputRepay = new SubscribeRepayDisp();
@@ -711,56 +614,6 @@ namespace WarikakeWeb.Models
 
             return input;
         }
-
-    }
-
-    public class SubscribePayDisp
-    {
-        public int PayId { get; set; }
-        public int PayUserId { get; set; }
-        public bool PayUserOn { get; set; }
-        [Display(Name = "メンバー")]
-        public string? PayUserName { get; set; }
-        [Display(Name = "立替額")]
-        [Range(0, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int PayAmount { get; set; }
-        [Display(Name = "立替額")]
-        public string? PayDisp { get; set; }
-    }
-    public class SubscribeRepayDisp
-    {
-        public int RepayId { get; set; }
-        public int RepayUserId { get; set; }
-        [Display(Name = "メンバー")]
-        public bool RepayUserOn { get; set; }
-        public string? RepayUserName { get; set; }
-        [Display(Name = "割勘額")]
-        [Range(0, int.MaxValue, ErrorMessage = "Please enter a valid integer")]
-        public int RepayAmount { get; set; }
-        [Display(Name = "割勘額")]
-        public string? RepayDisp { get; set; }
-    }
-    public class SubscribeProcess
-    {
-        public int memberNumber { get; set; }
-        [Display(Name = "精算時受け取る側")]
-        public List<SubscribeUserProcess> plusUsers { get; set; }
-        [Display(Name = "精算時支払う側")]
-        public List<SubscribeUserProcess> minusUsers { get; set; }
-
-        public SubscribeProcess()
-        {
-            memberNumber = 0;
-            plusUsers = new List<SubscribeUserProcess>();
-            minusUsers = new List<SubscribeUserProcess>();
-        }
-    }
-    public class SubscribeUserProcess
-    {
-        public int UserId { get; set; }
-        [Display(Name = "精算者")]
-        public string UserName { get; set; }
-        [Display(Name = "精算額")]
-        public int processAmount { get; set; }
     }
 }
+

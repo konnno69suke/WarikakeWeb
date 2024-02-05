@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using WarikakeWeb.Data;
-//using WarikakeWeb.Migrations;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -34,17 +35,15 @@ namespace WarikakeWeb.Controllers
             WarikakeIndex warikakeIndex = new WarikakeIndex();
 
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> unsettledWarikakeQueries = warikakeQuery.GetUnSettledWarikakeQueries((int)GroupId);
-            List<WarikakeQuery> unsettledSumWarikakeQueries = warikakeQuery.GetUnSettledSumWarikakeQueries((int)GroupId);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> unsettledWarikakeQueries = model.GetUnSettledWarikakeQueries((int)GroupId);
+            List<WarikakeQuery> unsettledSumWarikakeQueries = model.GetUnSettledSumWarikakeQueries((int)GroupId);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            warikakeIndex.warikakeDisps = warikakeDisp.GetWarikakeDisps(unsettledWarikakeQueries);
-            warikakeIndex.warikakeSum = warikakeDisp.GetWarikakeDisp(unsettledSumWarikakeQueries);
+            warikakeIndex.warikakeDisps = model.GetWarikakeDisps(unsettledWarikakeQueries);
+            warikakeIndex.warikakeSum = model.GetWarikakeDisp(unsettledSumWarikakeQueries);
 
             // 未精算メッセージのセット
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(unsettledSumWarikakeQueries);
+            ViewBag.WarikakeProcResult = model.repayMessage(unsettledSumWarikakeQueries);
 
             return View(warikakeIndex);
         }
@@ -73,12 +72,12 @@ namespace WarikakeWeb.Controllers
             MUser mUser = new MUser(_context);
             List<MUser> users = mUser.GetUsers((int)GroupId);
 
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp input = warikakeDisp.GetWarikakeDispInit(users, (int)UserId, true);
+            WarikakeModel model = new WarikakeModel(_context);
+            WarikakeDisp input = model.GetWarikakeDispInit(users, (int)GroupId, (int)UserId, true);
 
 
             // 直前の登録情報を提示
-            ViewBag.LastData = LastMessage((int)GroupId);
+            ViewBag.LastData = model.LastMessage((int)GroupId);
 
             // 初期値の一部を前回入力値で上書き
             DateTime? prevCostDate = (DateTime?)TempData["prevCostDate"];
@@ -119,7 +118,6 @@ namespace WarikakeWeb.Controllers
             {
                 return View(input);
             }
-
             // 業務入力チェック
             int errCnt = ValidateLogic(input);
             if (0 < errCnt)
@@ -129,8 +127,8 @@ namespace WarikakeWeb.Controllers
             try
             {
                 // 登録処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.CreateLogic(input, (int)GroupId,(int)UserId);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.CreateLogic(input, (int)GroupId,(int)UserId);
 
                 // 入力値を自画面遷移後の初期値にセットする準備
                 TempData["prevCostDate"] = input.CostDate;
@@ -140,12 +138,13 @@ namespace WarikakeWeb.Controllers
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
 
         // GET: WarikanController/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult Edit(int? id)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -157,12 +156,16 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetWarikakeQueries((int)GroupId, id);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp wariDisp = warikakeDisp.GetWarikakeDisp(warikakeQueries);
+            WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
 
             // 種別プルダウンのセット
             MGenre mGenre = new MGenre(_context);
@@ -201,25 +204,24 @@ namespace WarikakeWeb.Controllers
             {
                 return View(input);
             }
-
             // 業務入力チェック
             int errCnt = ValidateLogic(input);
             if (0 < errCnt)
             {
                 return View(input);
             }
-
             try
             {
                 // 更新処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.UpdateLogic(input, (int)GroupId,(int)UserId);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.UpdateLogic(input, (int)GroupId,(int)UserId);
 
                 // インデックス画面へ遷移
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
@@ -244,15 +246,14 @@ namespace WarikakeWeb.Controllers
             MUser mUser = new MUser(_context);
             List<MUser> users = mUser.GetUsers((int)GroupId);
 
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp input = warikakeDisp.GetWarikakeDispInit(users,(int)UserId,false);
+           WarikakeModel model = new WarikakeModel(_context);
+            WarikakeDisp input = model.GetWarikakeDispInit(users,(int)GroupId, (int)UserId,false);
 
             // 精算処理欄表示
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> unsettledSumWarikakeQueries = warikakeQuery.GetUnSettledSumWarikakeQueries((int)GroupId);
+            List<WarikakeQuery> unsettledSumWarikakeQueries = model.GetUnSettledSumWarikakeQueries((int)GroupId);
 
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(unsettledSumWarikakeQueries);
+            // 未精算メッセージのセット
+            ViewBag.WarikakeProcResult = model.repayMessage(unsettledSumWarikakeQueries);
 
             return View(input);
         }
@@ -284,31 +285,30 @@ namespace WarikakeWeb.Controllers
             {
                 return View(input);
             }
-
             // 業務入力チェック
             int errCnt = ValidateLogic(input);
             if (0 < errCnt)
             {
                 return View(input);
             }
-
             try
             {
                 // 登録処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.CreateLogic(input, (int)GroupId, (int)UserId);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.CreateLogic(input, (int)GroupId, (int)UserId);
 
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
 
 
         // GET: WarikanController/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int? id)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -320,17 +320,20 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 画面表示情報取得
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetWarikakeQueries((int)GroupId, id);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp wariDisp = warikakeDisp.GetWarikakeDisp(warikakeQueries);
+            WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
 
             // 未精算メッセージのセット
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(warikakeQueries);
+            ViewBag.WarikakeProcResult = model.repayMessage(warikakeQueries);
 
             return View(wariDisp);
         }
@@ -338,7 +341,7 @@ namespace WarikakeWeb.Controllers
         // POST: WarikanController/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(int? id, IFormCollection collection)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -349,22 +352,39 @@ namespace WarikakeWeb.Controllers
                 return RedirectToAction("Login", "Home");
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
+            if (id == null)
+            {
+                return NotFound();
+            }
 
             try
             {
                 // 更新処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.StatusChangeLogic(id, (int)statusEnum.削除, (int)UserId);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.StatusChangeLogic((int)id, (int)statusEnum.削除, (int)UserId);
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View(id);
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+
+                // 画面表示情報取得
+                // DB検索
+                WarikakeModel model = new WarikakeModel(_context);
+                List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
+                // 画面表示向けに編集
+                WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
+
+                // 未精算メッセージのセット
+                ViewBag.WarikakeProcResult = model.repayMessage(warikakeQueries);
+                return View(wariDisp);
             }
         }
+
         // GET: WarikanController/Registrate/5
-        public ActionResult Registrate(int id)
+        public ActionResult Registrate(int? id)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -376,12 +396,16 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetWarikakeQueries((int)GroupId, id);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp wariDisp = warikakeDisp.GetWarikakeDisp(warikakeQueries);
+            WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
 
             // 種別プルダウンのセット
             MGenre mGenre = new MGenre(_context);
@@ -420,32 +444,30 @@ namespace WarikakeWeb.Controllers
             {
                 return View(input);
             }
-
             // 業務入力チェック
             int errCnt = ValidateLogic(input);
             if (0 < errCnt)
             {
                 return View(input);
             }
-
             try
             {
                 // 更新処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.UpdateLogic(input, (int)GroupId, (int)UserId, (int)statusEnum.未精算);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.UpdateLogic(input, (int)GroupId, (int)UserId, (int)statusEnum.未精算);
 
                 // インデックスに戻る
                 return RedirectToAction(nameof(Index));
-
             }
-            catch
+            catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
 
         // GET: WarikanController/Settlement/5
-        public ActionResult Settlement(int id)
+        public ActionResult Settlement(int? id)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -457,16 +479,20 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 画面表示情報取得
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetWarikakeQueries((int)GroupId, id);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp wariDisp = warikakeDisp.GetWarikakeDisp(warikakeQueries);
+            WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
 
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(warikakeQueries);
+            // 未精算メッセージのセット
+            ViewBag.WarikakeProcResult = model.repayMessage(warikakeQueries);
 
             return View(wariDisp);
         }
@@ -474,7 +500,7 @@ namespace WarikakeWeb.Controllers
         // POST: WarikanController/Settlement
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Settlement(int id, IFormCollection collection)
+        public ActionResult Settlement(int? id, IFormCollection collection)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -486,22 +512,39 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             try
             {
                 // 更新処理
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                warikakeQuery.StatusChangeLogic(id, (int)statusEnum.精算済, (int)UserId);
+                WarikakeModel model = new WarikakeModel(_context);
+                model.StatusChangeLogic((int)id, (int)statusEnum.精算済, (int)UserId);
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+
+                // 画面表示情報取得
+                // DB検索
+                WarikakeModel model = new WarikakeModel(_context);
+                List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
+                // 画面表示向けに編集
+                WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
+
+                // 未精算メッセージのセット
+                ViewBag.WarikakeProcResult = model.repayMessage(warikakeQueries);
+
+                return View(wariDisp);
             }
         }
 
         // GET: WarikanController/SettlementAll/5
-        public ActionResult SettlementAll(int id)
+        public ActionResult SettlementAll(int? id)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -513,16 +556,19 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 画面情報を取得
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-            List<WarikakeQuery> unsettledSumWarikakeQueries = warikakeQuery.GetUnSettledSumWarikakeQueries((int)GroupId);
+            WarikakeModel model = new WarikakeModel(_context);
+            List<WarikakeQuery> unsettledSumWarikakeQueries = model.GetUnSettledSumWarikakeQueries((int)GroupId);
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            WarikakeDisp warikakeSum = warikakeDisp.GetWarikakeDisp(unsettledSumWarikakeQueries);
+            WarikakeDisp warikakeSum = model.GetWarikakeDisp(unsettledSumWarikakeQueries);
 
             // 未精算メッセージのセット
-            WarikakeProcess warikakeProcess = new WarikakeProcess();
-            ViewBag.WarikakeProcResult = warikakeProcess.repayMessage(unsettledSumWarikakeQueries);
+            ViewBag.WarikakeProcResult = model.repayMessage(unsettledSumWarikakeQueries);
 
             return View(warikakeSum);
         }
@@ -530,7 +576,7 @@ namespace WarikakeWeb.Controllers
         // POST: WarikanController/SettlementAll
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult SettlementAll(int id, IFormCollection collection)
+        public ActionResult SettlementAll(int? id, IFormCollection collection)
         {
             // セッション取得
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
@@ -542,24 +588,41 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             try
             {
                 // 一括更新対象取得
-                WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
-                List<WarikakeQuery> warikakeQueryList = warikakeQuery.GetUnSettledOrManualWarikakeQueries((int)GroupId);
+                WarikakeModel model = new WarikakeModel(_context);
+                List<WarikakeQuery> warikakeQueryList = model.GetUnSettledOrManualWarikakeQueries((int)GroupId);
 
                 // 一括更新
                 foreach (WarikakeQuery item in warikakeQueryList)
                 {
 
-                    warikakeQuery.StatusChangeLogic(item.CostId, (int)statusEnum.一括精算済, (int)UserId);
+                    model.StatusChangeLogic(item.CostId, (int)statusEnum.一括精算済, (int)UserId);
                 }
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+
+                // 画面表示情報取得
+                // DB検索
+                WarikakeModel model = new WarikakeModel(_context);
+                List<WarikakeQuery> warikakeQueries = model.GetWarikakeQueries((int)GroupId, (int)id);
+                // 画面表示向けに編集
+                WarikakeDisp wariDisp = model.GetWarikakeDisp(warikakeQueries);
+
+                // 未精算メッセージのセット
+                ViewBag.WarikakeProcResult = model.repayMessage(warikakeQueries);
+
+                return View(wariDisp);
             }
         }
 
@@ -631,20 +694,6 @@ namespace WarikakeWeb.Controllers
                 }
             }
             return errCnt;
-        }
-
-        private String LastMessage(int GroupId)
-        {
-            string fs = "";
-            TCost cost = _context.TCost.Where(c => c.GroupId == (int)GroupId).OrderByDescending(c => c.UpdatedDate).FirstOrDefault();
-            if (cost != null && cost.CostId != null)
-            {
-                MUser user = _context.MUser.Where(u => u.UserId == int.Parse(cost.UpdateUser)).FirstOrDefault();
-                String formatDate = cost.CostDate.ToString("yyyy/MM/dd");
-                
-                fs = $"※直前に登録されたデータは{cost.UpdatedDate}に{user.UserName}が登録した{formatDate}の{cost.CostAmount}円の{cost.GenreName}です。";
-            }
-            return fs;
         }
     }
 }

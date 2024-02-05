@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using WarikakeWeb.Data;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -33,7 +34,7 @@ namespace WarikakeWeb.Controllers
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
+            WarikakeModel model = new WarikakeModel(_context);
 
             if (year <= 0)
             {
@@ -43,24 +44,22 @@ namespace WarikakeWeb.Controllers
             warikakeSearch.currYear = year;
             warikakeSearch.currDisp = year + "年";
             warikakeSearch.nextYear = (DateTime.Now.Year<=year) ? 0 : year+1;
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year);
-            List<WarikakeQuery> warikakeSumQueries = warikakeQuery.GetAggregatedSumWarikakeQueries((int)GroupId, year);
+            List<WarikakeQuery> warikakeQueries = model.GetAggregatedWarikakeQueries((int)GroupId, year);
+            List<WarikakeQuery> warikakeSumQueries = model.GetAggregatedSumWarikakeQueries((int)GroupId, year);
 
-            List<WarikakeQuery> warikakeGraphQueries = warikakeQuery.GetAggreateGraphWarikakeQueries((int)GroupId, year);
+            List<WarikakeQuery> warikakeGraphQueries = model.GetAggreateGraphWarikakeQueries((int)GroupId, year);
 
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
-            warikakeSearch.warikakeSum = warikakeDisp.GetWarikakeDisp(warikakeSumQueries);
+            warikakeSearch.warikakeDisps = model.GetWarikakeDisps(warikakeQueries);
+            warikakeSearch.warikakeSum = model.GetWarikakeDisp(warikakeSumQueries);
 
-            List<WarikakeGraph> warikakeGraphs = warikakeDisp.GetWarikakeGraph(warikakeGraphQueries);
             WarikakeChart chart = new WarikakeChart();
             chart.data.labels = new List<String>();
             for (int i = 1; i <= 12; i++)
             {
                 chart.data.labels.Add("'" + i + "月'");
             }
-            chart.data.datasets = warikakeDisp.GetChartDataset(warikakeGraphQueries);
+            chart.data.datasets = model.GetChartDataset(warikakeGraphQueries);
 
             String tmpString = JsonConvert.SerializeObject(chart);
             warikakeSearch.warikakeChart = tmpString.Replace("\"", "");
@@ -82,7 +81,7 @@ namespace WarikakeWeb.Controllers
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
+            WarikakeModel model = new WarikakeModel(_context);
 
             int year = 0;
             int month = 0;
@@ -120,13 +119,12 @@ namespace WarikakeWeb.Controllers
                 warikakeSearch.nextMonth = currYearMonth.AddMonths(1).ToString("yyyy_MM");
             }
 
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month);
+            List<WarikakeQuery> warikakeQueries = model.GetAggregatedWarikakeQueries((int)GroupId, year, month);
 
-            List<WarikakeQuery> warikakeGraphQueries = warikakeQuery.GetAggreateGraphWarikakeQueries((int)GroupId, year, month);
+            List<WarikakeQuery> warikakeGraphQueries = model.GetAggreateGraphWarikakeQueries((int)GroupId, year, month);
 
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
+            warikakeSearch.warikakeDisps = model.GetWarikakeDisps(warikakeQueries);
 
             WarikakeChart chart = new WarikakeChart();
             chart.data.labels = new List<String>();
@@ -135,7 +133,7 @@ namespace WarikakeWeb.Controllers
             {
                 chart.data.labels.Add("'" + i +  "日'");
             }
-            chart.data.datasets = warikakeDisp.GetChartDataset(warikakeGraphQueries);
+            chart.data.datasets = model.GetChartDataset(warikakeGraphQueries);
 
             String tmpString = JsonConvert.SerializeObject(chart);
             warikakeSearch.warikakeChart = tmpString.Replace("\"", "");
@@ -157,7 +155,7 @@ namespace WarikakeWeb.Controllers
             // 戻り値の準備
             WarikakeSearch warikakeSearch = new WarikakeSearch();
             // DB検索
-            WarikakeQuery warikakeQuery = new WarikakeQuery(_context);
+            WarikakeModel model = new WarikakeModel(_context);
 
             int year = 0;
             int month = 0;
@@ -197,11 +195,10 @@ namespace WarikakeWeb.Controllers
             {
                 warikakeSearch.nextDate = currDate.AddDays(1).ToString("yyyy_MM_dd");
             }
-            List<WarikakeQuery> warikakeQueries = warikakeQuery.GetAggregatedWarikakeQueries((int)GroupId, year, month, day);
+            List<WarikakeQuery> warikakeQueries = model.GetAggregatedWarikakeQueries((int)GroupId, year, month, day);
 
             // 画面表示向けに編集
-            WarikakeDisp warikakeDisp = new WarikakeDisp();
-            warikakeSearch.warikakeDisps = warikakeDisp.GetWarikakeDisps(warikakeQueries);
+            warikakeSearch.warikakeDisps = model.GetWarikakeDisps(warikakeQueries);
 
             return View(warikakeSearch);
         }

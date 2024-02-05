@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using WarikakeWeb.Data;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -28,11 +30,11 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
-            // 画面表示処理
-            SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-            List<SubscribeQuery> subscribeQueries = subscribeQuery.GetSubscribeQueries((int)GroupId);
-            SubscribeDisp subscribeDisp = new SubscribeDisp();
-            List<SubscribeDisp> subscribeList = subscribeDisp.GetSubscribeDisps(subscribeQueries);
+            // DB検索
+            SubscribeModel model = new SubscribeModel(_context);
+            List<SubscribeQuery> subscribeQueries = model.GetSubscribeQueries((int)GroupId);
+            // 画面向けに編集
+            List<SubscribeDisp> subscribeList = model.GetSubscribeDisps(subscribeQueries);
 
             return View(subscribeList);
         }
@@ -60,8 +62,8 @@ namespace WarikakeWeb.Controllers
             List<MUser> users = mUser.GetUsers((int)GroupId);
 
             // 画面表示情報として編集
-            SubscribeDisp subscribeDisp = new SubscribeDisp();
-            SubscribeDisp input = subscribeDisp.GetBlankSubscribeDisp(users, (int)UserId);
+            SubscribeModel model = new SubscribeModel(_context);
+            SubscribeDisp input = model.GetBlankSubscribeDisp(users, (int)GroupId, (int)UserId);
 
             return View(input);
         }
@@ -91,7 +93,6 @@ namespace WarikakeWeb.Controllers
             {
                 return View(input);
             }
-
             // 業務入力チェック
             int errCnt = ValidateLogic(input);
             if (0 < errCnt)
@@ -102,18 +103,19 @@ namespace WarikakeWeb.Controllers
             try
             {
                 // 登録処理
-                SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-                subscribeQuery.CreateLogic(input, (int)GroupId, (int)UserId);
+                SubscribeModel model = new SubscribeModel(_context);
+                model.CreateLogic(input, (int)GroupId, (int)UserId);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
 
         // GET: SubscribeController/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult Edit(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -124,16 +126,20 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 端数を優先するユーザー情報をセット
             ViewBag.qid = UserId;
 
             // 対象情報取得
-            SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-            List<SubscribeQuery> subscribeQueries = subscribeQuery.GetOneSubscribeQueries((int)GroupId, id);
+            SubscribeModel model = new SubscribeModel(_context);
+            List<SubscribeQuery> subscribeQueries = model.GetOneSubscribeQueries((int)GroupId, (int)id);
 
             // 画面表示用に編集
-            SubscribeDisp subscribeDisp = new SubscribeDisp();
-            SubscribeDisp subscDisp = subscribeDisp.GetSubscribeDisp(subscribeQueries);
+            SubscribeDisp subscDisp = model.GetSubscribeDisp(subscribeQueries);
 
             // 日付設定を検索
             TDateSubscribe dateSubscribe = new TDateSubscribe(_context);
@@ -175,7 +181,7 @@ namespace WarikakeWeb.Controllers
         // POST: SubscribeController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, SubscribeDisp input)
+        public ActionResult Edit(int? id, SubscribeDisp input)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -185,6 +191,11 @@ namespace WarikakeWeb.Controllers
                 return RedirectToAction("Login", "Home");
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
+
+            if (id == null)
+            {
+                return NotFound();
+            }
 
             // グループ情報に応じた登録画面を表示
             MGenre mGenre = new MGenre(_context);
@@ -206,18 +217,19 @@ namespace WarikakeWeb.Controllers
             try
             {
                 // 更新処理
-                SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-                subscribeQuery.UpdateLogic(input, (int)UserId, id);
+                SubscribeModel model = new SubscribeModel(_context);
+                model.UpdateLogic(input, (int)GroupId, (int)UserId, (int)id);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(input);
             }
         }
 
         // GET: SubscribeController/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -228,12 +240,17 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
-            // 対象データの表示欄
-            SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-            List<SubscribeQuery> subscribeQueries = subscribeQuery.GetOneSubscribeQueries((int)GroupId, id);
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            SubscribeDisp subscribeDisp = new SubscribeDisp();
-            SubscribeDisp subscDisp = subscribeDisp.GetSubscribeDisp(subscribeQueries);
+            // DB検索
+            SubscribeModel model = new SubscribeModel(_context);
+            List<SubscribeQuery> subscribeQueries = model.GetOneSubscribeQueries((int)GroupId, (int)id);
+
+            // 画面表示向けに編集
+            SubscribeDisp subscDisp = model.GetSubscribeDisp(subscribeQueries);
 
             // 日付設定を検索
             TDateSubscribe dateSubscribe = new TDateSubscribe(_context);
@@ -245,7 +262,7 @@ namespace WarikakeWeb.Controllers
         // POST: SubscribeController/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(int? id, IFormCollection collection)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -256,17 +273,35 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: {id}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             try
             {
                 // 論理削除処理
-                SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-                subscribeQuery.StatusChangeLogic(id, 9, (int)UserId);
+                SubscribeModel model = new SubscribeModel(_context);
+                model.StatusChangeLogic((int)id, 9, (int)UserId);
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+
+                // DB検索
+                SubscribeModel model = new SubscribeModel(_context);
+                List<SubscribeQuery> subscribeQueries = model.GetOneSubscribeQueries((int)GroupId, (int)id);
+
+                // 画面表示向けに編集
+                SubscribeDisp subscDisp = model.GetSubscribeDisp(subscribeQueries);
+
+                // 日付設定を検索
+                TDateSubscribe dateSubscribe = new TDateSubscribe(_context);
+                subscDisp.dateSubscribe = dateSubscribe.GetDateSubscribe(subscDisp.SubscribeId);
+
+                return View(subscDisp);
             }
         }
 
@@ -283,12 +318,12 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
-            // 一覧表示処理
-            SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
-            List<SubscribeQuery> subscribeQueries = subscribeQuery.GetSubscribeQueries((int)GroupId);
-
-            SubscribeDisp subscribeDisp = new SubscribeDisp();
-            List<SubscribeDisp> subscribeList = subscribeDisp.GetSubscribeDisps(subscribeQueries);
+            // DB検索
+            SubscribeModel model = new SubscribeModel(_context);
+            List<SubscribeQuery> subscribeQueries = model.GetSubscribeQueries((int)GroupId);
+            
+            // 画面表示向けに編集
+            List<SubscribeDisp> subscribeList = model.GetSubscribeDisps(subscribeQueries);
 
             ViewBag.ResultMessage = null;
             return View(subscribeList);
@@ -297,7 +332,7 @@ namespace WarikakeWeb.Controllers
         // POST: SubscribeController/Publish
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Publish(int id, List<SubscribeDisp> subscribeDisps)
+        public ActionResult Publish(int? id, List<SubscribeDisp> subscribeDisps)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -309,11 +344,10 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
-
             // 一括仮登録処理
             try
             {
-                SubscribeQuery subscribeQuery = new SubscribeQuery(_context);
+                SubscribeModel model = new SubscribeModel(_context);
 
                 List<string> messageList = new List<string>();
                 foreach (SubscribeDisp subDis in subscribeDisps)
@@ -345,7 +379,7 @@ namespace WarikakeWeb.Controllers
                             int dayOfWeek = (int)loopDate.DayOfWeek;
                             if (weekOfMonthList.Contains(weekOfMonth) && dayOfWeekList.Contains(dayOfWeek))
                             {
-                                createResult = subscribeQuery.createCostData(subid, loopDate, (int)UserId);
+                                createResult = model.createCostData(subid, loopDate, (int)UserId);
                                 messageList.Add(createResult);
                             }
                             loopDate = loopDate.AddDays(1);
@@ -358,7 +392,7 @@ namespace WarikakeWeb.Controllers
                             int day = loopDate.Day;
                             if (dayList.Contains(day))
                             {
-                                createResult = subscribeQuery.createCostData(subid, loopDate, (int)UserId);
+                                createResult = model.createCostData(subid, loopDate, (int)UserId);
                                 messageList.Add(createResult);
                             }
 
@@ -367,7 +401,7 @@ namespace WarikakeWeb.Controllers
                             {
                                 if ((dayList.Contains(29) && lastDay < 29) || (dayList.Contains(30) && lastDay < 30) || (dayList.Contains(31) && lastDay < 31))
                                 {
-                                    createResult = subscribeQuery.createCostData(subid, loopDate, (int)UserId);
+                                    createResult = model.createCostData(subid, loopDate, (int)UserId);
                                     messageList.Add(createResult);
                                 }
                             }
@@ -391,14 +425,14 @@ namespace WarikakeWeb.Controllers
                 ViewBag.ResultMessage = messageList;
 
                 // 一覧表示処理
-                List<SubscribeQuery> subscribeQueries = subscribeQuery.GetSubscribeQueries((int)GroupId);
-                SubscribeDisp subscribeDisp = new SubscribeDisp();
-                List<SubscribeDisp> subscribeList = subscribeDisp.GetSubscribeDisps(subscribeQueries);
+                List<SubscribeQuery> subscribeQueries = model.GetSubscribeQueries((int)GroupId);
+                List<SubscribeDisp> subscribeList = model.GetSubscribeDisps(subscribeQueries);
 
                 return View(subscribeList);
             }
-            catch
+            catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 return View(subscribeDisps);
             }
         }
@@ -500,6 +534,5 @@ namespace WarikakeWeb.Controllers
             }
             return errCnt;
         }
-
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.Entities
 {
     public class MGroup
     {
@@ -14,13 +14,13 @@ namespace WarikakeWeb.Models
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String? CreateUser { get; set; }
-        public String? CreatePg { get; set; }
+        public string? CreateUser { get; set; }
+        public string? CreatePg { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public String? UpdateUser { get; set; }
-        public String? UpdatePg { get; set; }
+        public string? UpdateUser { get; set; }
+        public string? UpdatePg { get; set; }
 
-        public String ToString()
+        public string ToString()
         {
             FormattableString fs = $"MGroup :{Id}, {status}, {GroupId}, {GroupName}, {UserId}, {StartDate}";
             return fs.ToString();

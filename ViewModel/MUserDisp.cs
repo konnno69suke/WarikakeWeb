@@ -1,21 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.ViewModel
 {
     public class MUserDisp
     {
         public int Id { get; set; }
         [Display(Name = "ユーザー表示名")]
-        public String UserName { get; set; }
+        public string UserName { get; set; }
         [Display(Name = "ログインID")]
-        public String Email { get; set; }
+        public string Email { get; set; }
         [Display(Name = "パスワード")]
-        public String Password { get; set; }
+        public string Password { get; set; }
         [Display(Name = "パスワード(確認用)")]
-        public String PasswordAssert { get; set; }
+        public string PasswordAssert { get; set; }
         [Display(Name = "新規パスワード")]
-        public String? NewPassword { get; set; }
+        public string? NewPassword { get; set; }
         [Display(Name = "登録日")]
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
@@ -23,7 +23,7 @@ namespace WarikakeWeb.Models
         [NotMapped]
         public List<MGroupDisp>? GroupDispList { get; set; }
 
-        public MUserDisp() 
+        public MUserDisp()
         {
             GroupDispList = new List<MGroupDisp>();
         }

@@ -1,4 +1,4 @@
-﻿namespace WarikakeWeb.Models
+﻿namespace WarikakeWeb.Entities
 {
     public class MMember
     {
@@ -7,13 +7,13 @@
         public int GroupId { get; set; }
         public int UserId { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String? CreateUser { get; set; }
-        public String? CreatePg { get; set; }
+        public string? CreateUser { get; set; }
+        public string? CreatePg { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public String? UpdateUser { get; set; }
-        public String? UpdatePg { get; set; }
+        public string? UpdateUser { get; set; }
+        public string? UpdatePg { get; set; }
 
-        public String ToString()
+        public string ToString()
         {
             FormattableString fs = $"MMember :{Id}, {status}, {GroupId}, {UserId}";
             return fs.ToString();

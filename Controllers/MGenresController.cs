@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WarikakeWeb.Data;
+using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
+using WarikakeWeb.ViewModel;
 
 namespace WarikakeWeb.Controllers
 {
@@ -27,16 +29,12 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            List<MGenre> genres = _context.MGenre.Where(g => g.status == 1 && g.GroupId == GroupId).ToList();
-            List<MGenreDisp> genreDisps = new List<MGenreDisp>();
-            foreach (MGenre genre in genres)
-            {
-                MGenreDisp genreDisp = new MGenreDisp();
-                genreDisp.Id = genre.Id;
-                genreDisp.GenreName = genre.GenreName;
+            // DB検索
+            GenreModel model = new GenreModel(_context);
+            List<MGenre> genres = model.GetGenres((int)GroupId);
+            // 画面表示向けに編集
+            List<MGenreDisp> genreDisps = model.GetDisps(genres);
 
-                genreDisps.Add(genreDisp);
-            }
             return View(genreDisps);
         }
 
@@ -74,29 +72,23 @@ namespace WarikakeWeb.Controllers
                 return View(mGenreDisp);
             }
 
-            // 登録処理
-            string currPg = "MGenreInsert";
-            DateTime currDate = DateTime.Now;
+            try
+            {
+                // 登録処理
+                GenreModel model = new GenreModel(_context);
+                model.CreateLogic(mGenreDisp, (int)UserId, (int)GroupId);
 
-            MGenre mGenre = new MGenre();
-            mGenre.status = 1;
-            mGenre.GenreName = mGenreDisp.GenreName;
-            mGenre.GenreId = getNextGenreId();
-            mGenre.GroupId = (int)GroupId;
-            mGenre.CreatedDate = currDate;
-            mGenre.CreateUser = UserId.ToString();
-            mGenre.CreatePg = currPg;
-            mGenre.UpdatedDate = currDate;
-            mGenre.UpdateUser = UserId.ToString();
-            mGenre.UpdatePg = currPg;
-            Serilog.Log.Information($"SQL param: MGenre:{mGenre.ToString()}");
-            _context.Add(mGenre);
-            _context.SaveChanges();
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+                return View(mGenreDisp);
+            }
         }
 
         // GET: MGenres/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult Edit(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -107,27 +99,29 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 検索処理
-            var mGenre = _context.MGenre.Where(g => g.Id == id && g.status == 1).FirstOrDefault();
+            GenreModel model = new GenreModel(_context);
+            MGenre mGenre = model.GetGenreById((int)id);
             if (mGenre == null)
             {
                 return NotFound();
             }
 
             // 画面表示処理
-            MGenreDisp mGenreDisp = new MGenreDisp();
-            mGenreDisp.Id = mGenre.Id;
-            mGenreDisp.GenreName = mGenre.GenreName;
+            MGenreDisp mGenreDisp = model.GetGenreDisp(mGenre);
 
             return View(mGenreDisp);
         }
 
         // POST: MGenres/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, [Bind("Id,GenreName")] MGenreDisp mGenreDisp)
+        public ActionResult Edit(int? id, [Bind("Id,GenreName")] MGenreDisp mGenreDisp)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -138,40 +132,33 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
-            if (id != mGenreDisp.Id)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // 一般入力チェック
+            if (!ModelState.IsValid)
             {
                 return View(mGenreDisp);
             }
 
             try
             {
-                // 登録処理
-                string currPg = "MGenreUpdate";
-                DateTime currDate = DateTime.Now;
-
-                MGenre existingGenre = _context.MGenre.FirstOrDefault(g => g.Id == id && g.status == 1);
-                existingGenre.GenreName = mGenreDisp.GenreName;
-                existingGenre.UpdatedDate = currDate;
-                existingGenre.UpdateUser = UserId.ToString();
-                existingGenre.UpdatePg = currPg;
-                Serilog.Log.Information($"SQL param: MGenre:{existingGenre.ToString()}");
-                _context.Update(existingGenre);
-                _context.SaveChanges();
+                // 更新処理
+                GenreModel model = new GenreModel(_context);
+                model.UpdateLogic(mGenreDisp, (int)UserId, (int)id);
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
                 View(mGenreDisp);
             }
             return RedirectToAction(nameof(Index));
         }
 
         // GET: MGenres/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -182,17 +169,21 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 検索処理
-            var mGenre = _context.MGenre.FirstOrDefault(m => m.Id == id && m.status == 1);
+            GenreModel model = new GenreModel(_context);
+            var mGenre = model.GetGenreById((int)id);
             if (mGenre == null)
             {
                 return NotFound();
             }
 
             // 画面表示処理
-            MGenreDisp genreDisp = new MGenreDisp();
-            genreDisp.Id = mGenre.Id;
-            genreDisp.GenreName = mGenre.GenreName;
+            MGenreDisp genreDisp = model.GetGenreDisp(mGenre);
 
             return View(genreDisp);
         }
@@ -200,7 +191,7 @@ namespace WarikakeWeb.Controllers
         // POST: MGenres/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public ActionResult DeleteConfirmed(int? id)
         {
             int? GroupId = HttpContext.Session.GetInt32("GroupId");
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -211,35 +202,32 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             // 検索処理
-            var mGenre = _context.MGenre.FirstOrDefault(m => m.Id == id && m.status == 1);
+            GenreModel model = new GenreModel(_context);
+            var mGenre = model.GetGenreById((int)id);
             if (mGenre != null)
             {
                 return NotFound();
             }
 
-            // 登録処理
-            string currPg = "MGenreDelete";
-            DateTime currDate = DateTime.Now;
-
-            mGenre.status = (int)statusEnum.削除;
-            mGenre.UpdatedDate = currDate;
-            mGenre.UpdateUser = UserId.ToString();
-            mGenre.UpdatePg = currPg;
-            Serilog.Log.Information($"SQL param: MGenre:{mGenre.ToString()}");
-            _context.Update(mGenre);
-            _context.SaveChanges();
-
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                // 論理削除
+                model.StatusChangeLogic(mGenre, (int)UserId);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex.Message, ex.StackTrace);
+                MGenreDisp mGenreDisp = model.GetGenreDisp(mGenre);
+                return View(mGenreDisp);
+            }
         }
 
-        private int getNextGenreId()
-        {
-            int GenreId = _context.MGenre.Any() ? _context.MGenre.Max(a => a.GenreId) : -0;
-
-            GenreId++;
-
-            return GenreId;
-        }
     }
 }

@@ -1,4 +1,4 @@
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.ViewModel
 {
     public class ErrorViewModel
     {

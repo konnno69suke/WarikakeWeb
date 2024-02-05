@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using WarikakeWeb.Data;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.Entities
 {
     public class MGenre
     {

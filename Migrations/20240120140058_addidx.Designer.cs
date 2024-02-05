@@ -31,7 +31,7 @@ namespace WarikakeWeb.Migrations
             modelBuilder.HasSequence<int>("SubscribeIdSeq")
                 .StartsAt(12L);
 
-            modelBuilder.Entity("WarikakeWeb.Models.CsvMigration", b =>
+            modelBuilder.Entity("WarikakeWeb.Models.WCsvMigration", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -118,7 +118,7 @@ namespace WarikakeWeb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CsvMigration");
+                    b.ToTable("WCsvMigration");
                 });
 
             modelBuilder.Entity("WarikakeWeb.Models.MGenre", b =>

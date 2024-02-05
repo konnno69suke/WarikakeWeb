@@ -3,19 +3,20 @@ using System.Composition;
 using System.Text;
 using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
+using WarikakeWeb.ViewModel;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.Entities
 {
-    public class CsvMigration
+    public class WCsvMigration
     {
         private readonly WarikakeWebContext _context;
 
-        public CsvMigration()
+        public WCsvMigration()
         {
 
         }
 
-        public CsvMigration(WarikakeWebContext context)
+        public WCsvMigration(WarikakeWebContext context)
         {
             _context = context;
         }
@@ -23,32 +24,32 @@ namespace WarikakeWeb.Models
 
         public int Id { get; set; }
         public int status { get; set; }
-        public String inputDate { get; set; }
-        public String buyDate { get; set; }
-        public String kindName { get; set; }
-        public String buyAmount { get; set; }
-        public String pf1 { get; set; }
-        public String pf2 { get; set; }
-        public String pf3 { get; set; }
-        public String pa1 { get; set; }
-        public String pa2 { get; set; }
-        public String pa3 { get; set; }
-        public String pr1 { get; set; }
-        public String pr2 { get; set; }
-        public String pr3 { get; set; }
-        public String buyStatus { get; set; }
+        public string inputDate { get; set; }
+        public string buyDate { get; set; }
+        public string kindName { get; set; }
+        public string buyAmount { get; set; }
+        public string pf1 { get; set; }
+        public string pf2 { get; set; }
+        public string pf3 { get; set; }
+        public string pa1 { get; set; }
+        public string pa2 { get; set; }
+        public string pa3 { get; set; }
+        public string pr1 { get; set; }
+        public string pr2 { get; set; }
+        public string pr3 { get; set; }
+        public string buyStatus { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String? CreateUser { get; set; }
-        public String? CreatePg { get; set; }
+        public string? CreateUser { get; set; }
+        public string? CreatePg { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public String? UpdateUser { get; set; }
-        public String? UpdatePg { get; set; }
+        public string? UpdateUser { get; set; }
+        public string? UpdatePg { get; set; }
 
         // CSVエクスポート用情報を取得
-        public List<CsvMigration> GetExportData(int GroupId)
+        public List<WCsvMigration> GetExportData(int GroupId)
         {
             Serilog.Log.Information($"SQL param:{GroupId}");
-            List<CsvMigration> csvMigrations = _context.CsvMigration.FromSql($@"
+            List<WCsvMigration> csvMigrations = _context.WCsvMigration.FromSql($@"
                 with paydata as (select costid,
                                 max(case when payid = 0 then payamount end) as pay1,
                                 max(case when payid = 1 then payamount end) as pay2,
@@ -78,7 +79,7 @@ namespace WarikakeWeb.Models
         }
 
         // DBから取得したデータをcsvフォーマットの文字列に変換
-        public string GetExportString(List<CsvMigration> csvMigrations, Boolean hasQuote)
+        public string GetExportString(List<WCsvMigration> csvMigrations, bool hasQuote)
         {
             StringBuilder sb = new StringBuilder("");
             sb.AppendLine("#入力日時,購入日,品目,金額,DB立替,RM立替,FN立替,DB分担,RM分担,FN分担,DB端数,RM端数,FN端数,精算状況");
@@ -93,7 +94,7 @@ namespace WarikakeWeb.Models
             return sb.ToString();
 
         }
-        private static string CreateCsvBodyWithQuote(CsvMigration a)
+        private static string CreateCsvBodyWithQuote(WCsvMigration a)
         {
             WarikakeDisp wari = new WarikakeDisp();
             var sb = new StringBuilder();
@@ -114,7 +115,7 @@ namespace WarikakeWeb.Models
             return sb.ToString();
         }
 
-        private static string CreateCsvBodyNoQuote(CsvMigration a)
+        private static string CreateCsvBodyNoQuote(WCsvMigration a)
         {
             WarikakeDisp wari = new WarikakeDisp();
             var sb = new StringBuilder();

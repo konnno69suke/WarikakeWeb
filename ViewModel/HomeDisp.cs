@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WarikakeWeb.Models
+namespace WarikakeWeb.ViewModel
 {
     public class HomeDisp
     {
