@@ -21,7 +21,7 @@ namespace WarikakeWeb.Migrations
                 startValue: 12L);
 
             migrationBuilder.CreateTable(
-                name: "WCsvMigration",
+                name: "CsvMigration",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -394,7 +394,7 @@ namespace WarikakeWeb.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "WCsvMigration");
+                name: "CsvMigration");
 
             migrationBuilder.DropTable(
                 name: "MGenre");

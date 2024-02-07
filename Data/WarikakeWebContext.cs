@@ -24,7 +24,7 @@ namespace WarikakeWeb.Data
         public DbSet<TRepaySubscribe> TRepaySubscribe { get; set; } = default!;
         public DbSet<TDateSubscribe> TDateSubscribe { get; set; }
         public DbSet<TSubscribe> TSubscribe { get; set; }
-        public DbSet<WCsvMigration> WCsvMigration { get; set; } = default!;
+        public DbSet<CsvMigration> CsvMigration { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

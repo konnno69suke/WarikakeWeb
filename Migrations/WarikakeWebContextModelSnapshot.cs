@@ -28,7 +28,7 @@ namespace WarikakeWeb.Migrations
             modelBuilder.HasSequence<int>("SubscribeIdSeq")
                 .StartsAt(12L);
 
-            modelBuilder.Entity("WarikakeWeb.Models.WCsvMigration", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.CsvMigration", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,6 +45,9 @@ namespace WarikakeWeb.Migrations
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
                     b.Property<string>("UpdatePg")
                         .HasColumnType("nvarchar(max)");
 
@@ -53,6 +56,9 @@ namespace WarikakeWeb.Migrations
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("buyAmount")
                         .IsRequired()
@@ -65,6 +71,9 @@ namespace WarikakeWeb.Migrations
                     b.Property<string>("buyStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("importId")
+                        .HasColumnType("int");
 
                     b.Property<string>("inputDate")
                         .IsRequired()
@@ -115,10 +124,10 @@ namespace WarikakeWeb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WCsvMigration");
+                    b.ToTable("CsvMigration");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.MGenre", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.MGenre", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -162,7 +171,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("MGenre");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.MGroup", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.MGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -209,7 +218,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("MGroup");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.MMember", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.MMember", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -249,7 +258,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("MMember");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.MSalt", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.MSalt", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -290,7 +299,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("MSalt");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.MUser", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.MUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -342,7 +351,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("MUser");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TCost", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TCost", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -409,7 +418,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TCost");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TCostSubscribe", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TCostSubscribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -469,7 +478,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TCostSubscribe");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TDateSubscribe", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TDateSubscribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -674,7 +683,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TDateSubscribe");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TPay", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TPay", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -724,7 +733,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TPay");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TPaySubscribe", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TPaySubscribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -770,7 +779,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TPaySubscribe");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TRepay", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TRepay", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -820,7 +829,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TRepay");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TRepaySubscribe", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TRepaySubscribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -866,7 +875,7 @@ namespace WarikakeWeb.Migrations
                     b.ToTable("TRepaySubscribe");
                 });
 
-            modelBuilder.Entity("WarikakeWeb.Models.TSubscribe", b =>
+            modelBuilder.Entity("WarikakeWeb.Entities.TSubscribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
