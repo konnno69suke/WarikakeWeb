@@ -7,12 +7,20 @@
 <h1>CSVインポート</h1>
 
 <h4>移行データをインポート</h4>
-@ViewBag.impCnt
+@if (ViewBag.resultMessage != null)
+{
+    @foreach (string message in ViewBag.resultMessage)
+    {
+        <li>
+            @message
+        </li>
+    }
+}
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Import" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <form asp-action="Import" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="col-md-4">
             <div class="form-group">
                 <label asp-for="formFile" class="control-label"></label>
                 <input type="file" asp-for="@Model.formFile" class="form-control" />
@@ -21,11 +29,59 @@
             <div class="form-group">
                 <input type="submit" value="インポート" class="btn btn-primary" />
             </div>
-            <div>
-                <a asp-area="" asp-controller="CsvImport" asp-action="Migrate">移行</a>
-            </div>
-        </form>
-    </div>
+        </div>
+        <hr />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.MigrationDisps[0].StatusName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.MigrationDisps[0].UserName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.MigrationDisps[0].ImpCount)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.MigrationDisps[0].FromDate)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.MigrationDisps[0].UntilDate)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.MigrationDisps)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.StatusName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.UserName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.ImpCount)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FromDate)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.UntilDate)
+                        </td>
+                        <td>
+                            @if (item.Status == 0)
+                            {
+                                <input type="submit" asp-action="Migrate" asp-route-id="@item.ImportId" class="btn btn-primary" value="データ取込" />
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
 </div>
 
 <div>
