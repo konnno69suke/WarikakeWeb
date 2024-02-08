@@ -25,7 +25,9 @@
                      | 
                     @Html.DisplayNameFor(model => model.UserName)
                     :
-                    @Html.DisplayFor(model => model.UserName)
+                    <a asp-area="" asp-controller="MUsers" asp-action="Index">
+                        @Html.DisplayFor(model => model.UserName)
+                    </a>
                 </div>
                 <hr />
                 <div class="container">
@@ -44,8 +46,6 @@
                         <a asp-area="" asp-controller="Subscribe" asp-action="Index">定期支払</a>
                         |
                         <a asp-area="" asp-controller="MGenres" asp-action="Index">種別</a>
-                        |
-                        <a asp-area="" asp-controller="MUsers" asp-action="Index">ユーザー</a>
                     </p>
                 </div>
                 <div class="container">

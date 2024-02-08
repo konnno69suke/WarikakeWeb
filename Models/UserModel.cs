@@ -148,6 +148,78 @@ namespace WarikakeWeb.Models
             _context.SaveChanges();
         }
 
+        // 新規登録処理（完全に新規）
+        public void CreateLogic(MUserDisp mUserDisp)
+        {
+            // ユーザー登録
+            DateTime dateTime = DateTime.Now;
+            string currPg = "MUsersInsert";
+            int newUserId = getNextUserId();
+
+            // パスワードハッシュ対応有無で処理分岐
+            IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).Build();
+            string HashAndSalt = configuration["HashAndSalt"];
+            if (HashAndSalt.Equals("use"))
+            {
+                // パスワードをハッシュ化
+                byte[] salt = new byte[128 / 8];
+                using var rng = RandomNumberGenerator.Create();
+                rng.GetBytes(salt);
+                UserModel model = new UserModel(_context);
+                string hash = model.getHasshedPassword(mUserDisp.Password, salt);
+
+                MUser mUser = new MUser();
+                mUser.UserId = newUserId;
+                mUser.status = 1;
+                mUser.UserName = mUserDisp.UserName;
+                mUser.Email = mUserDisp.Email;
+                mUser.Password = hash;
+                mUser.StartDate = dateTime.Date;
+                mUser.CreatedDate = dateTime;
+                mUser.CreateUser = newUserId.ToString();
+                mUser.CreatePg = currPg;
+                mUser.UpdatedDate = dateTime;
+                mUser.UpdateUser = newUserId.ToString();
+                mUser.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
+                _context.Add(mUser);
+
+                MSalt mSalt = new MSalt();
+                mSalt.status = 1;
+                mSalt.UserId = newUserId;
+                mSalt.salt = salt;
+                mSalt.CreatedDate = dateTime;
+                mSalt.CreateUser = newUserId.ToString();
+                mSalt.CreatePg = currPg;
+                mSalt.UpdatedDate = dateTime;
+                mSalt.UpdateUser = newUserId.ToString();
+                mSalt.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MSalt: {mSalt.ToString()}");
+                _context.Add(mSalt);
+            }
+            else
+            {
+                // パスワードをハッシュ化しない
+                MUser mUser = new MUser();
+                mUser.UserId = newUserId;
+                mUser.status = 1;
+                mUser.UserName = mUserDisp.UserName;
+                mUser.Email = mUserDisp.Email;
+                mUser.Password = mUserDisp.Password;
+                mUser.StartDate = dateTime.Date;
+                mUser.CreatedDate = dateTime;
+                mUser.CreateUser = newUserId.ToString();
+                mUser.CreatePg = currPg;
+                mUser.UpdatedDate = dateTime;
+                mUser.UpdateUser = newUserId.ToString();
+                mUser.UpdatePg = currPg;
+                Serilog.Log.Information($"SQL param: MUser: {mUser.ToString()}");
+                _context.Add(mUser);
+            }
+
+            _context.SaveChanges();
+        }
+
         // 更新処理
         public void UpdateLogic(MUserDisp mUserDisp, int UserId, int Id)
         {
