@@ -31,24 +31,26 @@ namespace WarikakeWeb.Controllers
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}");
 
             // 検索処理
-            UserModel model = new UserModel(_context);
+            GroupModel model = new GroupModel(_context);
             MGroup mGroup = _context.MGroup.Where(g => g.GroupId == GroupId && g.status == 1).FirstOrDefault();
-            List<MUser> users = new List<MUser>();
+            MGroupDisp users = new MGroupDisp();
             if (mGroup.UserId == UserId)
             {
                 // リーダーの場合
-                users = model.GetGroupUsers((int)GroupId);
+                List<MGroupQuery> queryList = model.GetGroupLeaderQueryList((int)GroupId);
+                // 画面表示向けに編集
+                users = model.GetGroupDisp(queryList);
+                users.isLeader = true;
             }
             else
             {
                 // メンバーの場合
-                users.Add(model.GetUserByUserId((int)UserId));
+                List<MGroupQuery> queryList = model.GetGroupMemberQueryList((int)GroupId, (int)UserId);
+                // 画面表示向けに編集
+                users = model.GetGroupDisp(queryList);
             }
 
-            // 画面表示処理
-            List<MUserDisp> disps = model.GetMUserDispList(users);
-
-            return View(disps);
+            return View(users);
         }
 
         // GET: MUsers/Details/5

@@ -60,7 +60,7 @@ namespace WarikakeWeb.Controllers
             {
                 return NotFound();
             }
-            List<MGroupQuery> queryList = model.GetGroupQueryList((int)UserId, mGroup.GroupId);
+            List<MGroupQuery> queryList = model.GetGroupMemberQueryList((int)UserId, mGroup.GroupId);
             // 画面表示向けに編集
             MGroupDisp mGroupDisp = model.GetGroupDisp(queryList);
 
@@ -109,7 +109,7 @@ namespace WarikakeWeb.Controllers
                 GroupModel model = new GroupModel(_context);
                 model.CreateLogic(mGroupDisp, (int)UserId);
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "MUsers");
             }
             catch (Exception ex)
             {
@@ -181,7 +181,7 @@ namespace WarikakeWeb.Controllers
                 GroupModel model = new GroupModel(_context);
                 model.UpdateLogic(mGroupDisp, (int)UserId, (int)id);
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "MUsers");
             }
             catch (Exception ex)
             {
@@ -263,7 +263,7 @@ namespace WarikakeWeb.Controllers
                 // 更新処理
                 model.StatusChangeLogic(mGroup, (int)UserId);
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "MUsers");
             }
             catch (Exception ex)
             {

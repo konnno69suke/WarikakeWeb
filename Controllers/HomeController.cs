@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Diagnostics;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using WarikakeWeb.Data;
 using WarikakeWeb.Entities;
 using WarikakeWeb.Models;
@@ -194,6 +195,43 @@ namespace WarikakeWeb.Controllers
             return RedirectToAction("Index");
         }
 
+        public ActionResult CreateUser()
+        {
+            Serilog.Log.Information($"GroupId: notyet, UserId: notyet");
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CreateUser(MUserDisp mUserDisp) {
+
+            // 一般入力チェック
+            if (!ModelState.IsValid)
+            {
+                return View(mUserDisp);
+            }
+            // 業務入力チェック
+            if (0 < ValidateLogic(mUserDisp))
+            {
+                return View(mUserDisp);
+            }
+            try
+            {
+                // 登録処理
+                UserModel model = new UserModel(_context);
+                model.CreateLogic(mUserDisp);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                return View(mUserDisp);
+            }
+
+            return RedirectToAction("Login");
+        }
+
+
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public ActionResult Error()
         {
@@ -215,6 +253,25 @@ namespace WarikakeWeb.Controllers
         {
 
             return View();
+        }
+
+
+        public int ValidateLogic(MUserDisp mUserDisp)
+        {
+            int retInt = 0;
+            if (!mUserDisp.Password.Equals(mUserDisp.PasswordAssert))
+            {
+                ModelState.AddModelError(nameof(MUserDisp.Password), "パスワードと確認用は一致させてください");
+                retInt++;
+            }
+            UserModel model = new UserModel(_context);
+            Boolean useChk = _context.MUser.Any(u => u.Email.Equals(mUserDisp.Email) && u.status == 1);
+            if (useChk)
+            {
+                ModelState.AddModelError(nameof(MUserDisp.Email), "既に使用されているIDです");
+                retInt++;
+            }
+            return retInt;
         }
     }
 }

@@ -14,7 +14,6 @@ namespace WarikakeWeb.ViewModel
         public DateTime memStartDate { get; set; }
     }
 
-
     public class MGroupDisp
     {
         public int Id { get; set; }
@@ -29,5 +28,6 @@ namespace WarikakeWeb.ViewModel
         [NotMapped]
         public List<MUserDisp>? userList { get; set; } = new List<MUserDisp>();
 
+        public bool isLeader { get; set; } = false;
     }
 }

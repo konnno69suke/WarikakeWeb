@@ -1,41 +1,75 @@
-﻿@model IEnumerable<WarikakeWeb.ViewModel.MUserDisp>
+﻿@model WarikakeWeb.ViewModel.MGroupDisp
 
 @{
-    ViewData["Title"] = "ユーザー一覧";
+    ViewData["Title"] = "ユーザー情報";
 }
 
-<h1>ユーザー一覧</h1>
-
+<h1>ユーザー情報</h1>
+@if (Model.isLeader)
+{
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.groupName)
+        </dt>
+        <dd class="col-sm-4">
+            @Html.DisplayFor(model => model.groupName)
+        </dd>
+        <dd class="col-sm-6">
+            <a asp-controller="MGroups" asp-action="Create">グループ作成</a> |
+            <a asp-controller="MGroups" asp-action="Edit" asp-route-id="@Model.Id">グループ編集</a> |
+            <a asp-controller="MGroups" asp-action="Details" asp-route-id="@Model.Id">グループ詳細</a> |
+            <a asp-controller="MGroups" asp-action="Delete" asp-route-id="@Model.Id">グループ解散</a>
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.masterName)
+        </dt>
+        <dd class="col-sm-4">
+            @Html.DisplayFor(model => model.masterName)
+        </dd>
+        <dd class="col-sm-6">
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.startDate)
+        </dt>
+        <dd class="col-sm-4">
+            @Html.DisplayFor(model => model.startDate)
+        </dd>
+        <dd class="col-sm-6">
+        </dd>
+    </dl>
+}
+<hr />
 <p>
-    <a asp-action="Create">新規登録</a>
+    <a asp-action="Create">新規ユーザー登録</a>
 </p>
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.UserName)
+                @Html.DisplayNameFor(model => model.userList[0].UserName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Email)
+                @Html.DisplayNameFor(model => model.userList[0].StartDate)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.UserName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">編集</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">詳細</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">退会</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.userList)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.StartDate)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">編集</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">詳細</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">退会</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

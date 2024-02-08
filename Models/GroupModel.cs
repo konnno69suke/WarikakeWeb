@@ -32,14 +32,33 @@ namespace WarikakeWeb.Models
             return groupDisps;
         }
 
-        // ユーザーとグループIDに紐づくグループ情報を取得
-        public List<MGroupQuery> GetGroupQueryList(int UserId, int GroupId)
+        // グループIDに紐づくグループ情報を取得
+        public List<MGroupQuery> GetGroupLeaderQueryList(int GroupId)
         {
-            Serilog.Log.Information($"SQL param:{UserId}, {GroupId}");
+            Serilog.Log.Information($"SQL param:{GroupId}");
             List<MGroupQuery> queryList = _context.Database.SqlQuery<MGroupQuery>($@"
                 select mg.id, mg.groupname, mv.username mastername, mg.startdate,
                 mu.Id memid, mu.username memname, mu.startdate memstartdate 
-                from mgroup mg inner join mmember mm on mg.groupid = mm.groupid
+                from mgroup mg 
+                inner join mmember mm on mg.groupid = mm.groupid
+                inner join muser mu on mm.userid = mu.userid
+                inner join muser mv on mg.userid = mv.userid
+                where mg.groupid = {GroupId}
+                and mg.status = 1 and mm.status = 1 and mu.status = 1 and mv.status = 1
+                order by mg.startdate desc").ToList();
+
+            return queryList;
+        }
+
+        // ユーザーとグループIDに紐づくグループ情報を取得
+        public List<MGroupQuery> GetGroupMemberQueryList(int GroupId, int UserId)
+        {
+            Serilog.Log.Information($"SQL param:{GroupId}, {UserId}");
+            List<MGroupQuery> queryList = _context.Database.SqlQuery<MGroupQuery>($@"
+                select mg.id, mg.groupname, mv.username mastername, mg.startdate,
+                mu.Id memid, mu.username memname, mu.startdate memstartdate 
+                from mgroup mg 
+                inner join mmember mm on mg.groupid = mm.groupid
                 inner join muser mu on mm.userid = mu.userid
                 inner join muser mv on mg.userid = mv.userid
                 where mu.userid = {UserId}
