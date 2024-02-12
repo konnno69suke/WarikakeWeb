@@ -1,0 +1,39 @@
+﻿@model WarikakeWeb.ViewModel.RequestDisp
+
+@{
+    ViewData["Title"] = "承認";
+}
+
+<h1>承認</h1>
+<form asp-action="Agreement">
+    <div>
+        <h4>承認</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.TypeName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.TypeName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.ReqUserName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.ReqUserName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.LimitDate)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.LimitDate)
+            </dd>
+        </dl>
+    </div>
+    <input type="hidden" asp-for="RequestId" />
+    <input type="submit" value="承認" class="btn btn-primary" />
+    <input type="submit" asp-action="Deny" value="却下" class="btn btn-danger" />
+</form>
+<div>
+    <a asp-action="Index">一覧に戻る</a>
+</div>

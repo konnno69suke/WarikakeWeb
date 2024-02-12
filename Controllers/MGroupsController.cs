@@ -107,7 +107,7 @@ namespace WarikakeWeb.Controllers
             {
                 // 登録処理
                 GroupModel model = new GroupModel(_context);
-                model.CreateLogic(mGroupDisp, (int)UserId);
+                model.CreateLogic(mGroupDisp.groupName, (int)UserId);
 
                 return RedirectToAction("Index", "MUsers");
             }
@@ -172,6 +172,12 @@ namespace WarikakeWeb.Controllers
             if (0 < PersonCheck(mGroupDisp, (int)UserId))
             {
                 ModelState.AddModelError(nameof(MGroupDisp.groupName), "本人確認が取れません");
+                return View(mGroupDisp);
+            }
+            // 重複チェック
+            if (0 < DupliCheck(mGroupDisp.groupName, (int)UserId))
+            {
+                ModelState.AddModelError(nameof(MGroupDisp.groupName), "既に使用されているグループ名です");
                 return View(mGroupDisp);
             }
 
@@ -280,6 +286,19 @@ namespace WarikakeWeb.Controllers
             if (group.UserId != UserId)
             {
                 retInt++;
+            }
+            return retInt;
+        }
+
+        private int DupliCheck(string GroupName, int UserId)
+        {
+            int retInt = 0;
+            GroupModel model = new GroupModel(_context);
+            MGroup group = model.GetDupliGroupByGroupName(GroupName, UserId);
+            if(group != null)
+            {
+                ModelState.AddModelError(nameof(MGroupDisp.groupName), "既に使用されているグループ名です");
+                retInt = 1;
             }
             return retInt;
         }

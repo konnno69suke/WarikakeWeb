@@ -15,16 +15,17 @@ namespace WarikakeWeb.Data
         public DbSet<MGroup> MGroup { get; set; } = default!;
         public DbSet<MMember> MMember { get; set; } = default!;
         public DbSet<MUser> MUser { get; set; } = default!;
-        public DbSet<MSalt> MSalt { get; set; }
+        public DbSet<MSalt> MSalt { get; set; } = default!;
         public DbSet<TCost> TCost { get; set; } = default!;
         public DbSet<TPay> TPay { get; set; } = default!;
         public DbSet<TRepay> TRepay { get; set; } = default!;
         public DbSet<TCostSubscribe> TCostSubscribe { get; set; } = default!;
         public DbSet<TPaySubscribe> TPaySubscribe { get; set; } = default!;
         public DbSet<TRepaySubscribe> TRepaySubscribe { get; set; } = default!;
-        public DbSet<TDateSubscribe> TDateSubscribe { get; set; }
-        public DbSet<TSubscribe> TSubscribe { get; set; }
+        public DbSet<TDateSubscribe> TDateSubscribe { get; set; } = default!;
+        public DbSet<TSubscribe> TSubscribe { get; set; } = default!;
         public DbSet<CsvMigration> CsvMigration { get; set; } = default!;
+        public DbSet<TRequest> TRequest { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

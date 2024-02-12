@@ -1,0 +1,39 @@
+﻿@model WarikakeWeb.ViewModel.TempKeyDisp
+@{
+    ViewData["Title"] = "パスワードリセット";
+}
+<h1パスワードリセット</h1>
+
+<h4>一時キー</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @if (ViewBag.NewPassword != null)
+        {
+            <div>パスワードをリセットしました。現在のパスワードは以下のとおりです。</div>
+            <h4>@ViewBag.NewPassword</h4>
+            <a asp-action="Login">ログイン</a>
+        }
+        else
+        {
+            <div>グループリーダーの承認を得る前の一時キーは無効です。</div>
+            <div>承認済の一時キーでパスワードをリセットします。</div>
+            <form asp-action="TempKeyLogin">
+                <div class="form-group">
+                    <label asp-for="TempKey" class="control-label"></label>
+                    <input asp-for="TempKey" class="form-control" />
+                    <span asp-validation-for="TempKey" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="パスワードリセット" class="btn btn-primary" />
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
