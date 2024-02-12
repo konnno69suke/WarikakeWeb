@@ -31,14 +31,12 @@ namespace WarikakeWeb.Controllers
             }
             Serilog.Log.Information($"GroupId:{GroupId}, UserId:{UserId}, CostId: none");
 
-            // 戻り値の準備
-            WarikakeIndex warikakeIndex = new WarikakeIndex();
-
             // DB検索
             WarikakeModel model = new WarikakeModel(_context);
             List<WarikakeQuery> unsettledWarikakeQueries = model.GetUnSettledWarikakeQueries((int)GroupId);
             List<WarikakeQuery> unsettledSumWarikakeQueries = model.GetUnSettledSumWarikakeQueries((int)GroupId);
             // 画面表示向けに編集
+            WarikakeIndex warikakeIndex = new WarikakeIndex();
             warikakeIndex.warikakeDisps = model.GetWarikakeDisps(unsettledWarikakeQueries);
             warikakeIndex.warikakeSum = model.GetWarikakeDisp(unsettledSumWarikakeQueries);
 

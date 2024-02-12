@@ -30,6 +30,12 @@
                     </a>
                 </div>
                 <hr />
+                @if (Model.RequestFlg)
+                {
+                    <div class="container">
+                        <h5><a asp-area="" asp-controller="Request" asp-action="Index">承認待ちのリクエストがあります</a></h5>
+                    </div>
+                }
                 <div class="container">
                     日々の確認と入力
                     <p>

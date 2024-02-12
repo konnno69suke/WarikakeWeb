@@ -68,6 +68,14 @@ namespace WarikakeWeb.Models
 
             return queryList;
         }
+
+        // 対象者がメンバーか確認する
+        public bool chkGroupMember(int GroupId, int UserId)
+        {
+            bool isMember = _context.MMember.Any(m => m.GroupId == GroupId && m.UserId == UserId && m.status == 1);
+            return isMember;
+        }
+
         // idでグループ情報を取得
         public MGroup GetGroupById(int id)
         {
@@ -77,6 +85,25 @@ namespace WarikakeWeb.Models
         public MGroup GetGroupByGroupId(int GroupId)
         {
             MGroup group = _context.MGroup.Where(g => g.GroupId == GroupId && g.status == 1).FirstOrDefault();
+            return group;
+        }
+
+
+        public MGroup GetGroupByGroupName(string GroupName)
+        {
+            MGroup group = _context.MGroup.Where(g => g.GroupName == GroupName && g.status == 1).FirstOrDefault();
+            return group;
+        }
+
+        public MGroup GetGroupByGroupName(string GroupName, int UserId)
+        {
+            MGroup group = _context.MGroup.Where(g => g.GroupName == GroupName && g.UserId == UserId && g.status == 1).FirstOrDefault();
+            return group;
+        }
+
+        public MGroup GetDupliGroupByGroupName (string GroupName, int UserId)
+        {
+            MGroup group = _context.MGroup.Where(g=> g.GroupName == GroupName && g.UserId != UserId && g.status == 1).FirstOrDefault();
             return group;
         }
 
@@ -95,7 +122,7 @@ namespace WarikakeWeb.Models
         }
 
         // ユーザー登録処理
-        public void CreateLogic(MGroupDisp mGroupDisp, int UserId)
+        public void CreateLogic(string GroupName, int UserId)
         {
 
             int newGroupId = getNextGroupId();
@@ -105,7 +132,7 @@ namespace WarikakeWeb.Models
             MGroup mGroup = new MGroup();
             mGroup.status = 1;
             mGroup.GroupId = newGroupId;
-            mGroup.GroupName = mGroupDisp.groupName;
+            mGroup.GroupName = GroupName;
             mGroup.UserId = (int)UserId;
             mGroup.StartDate = currTime.Date;
             mGroup.CreatedDate = currTime;

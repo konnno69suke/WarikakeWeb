@@ -11,5 +11,7 @@ namespace WarikakeWeb.ViewModel
         [Display(Name = "グループ")]
         public string? GroupName { get; set; }
         public int? GroupUserId { get; set; }
+
+        public bool RequestFlg { get; set; } = false;
     }
 }

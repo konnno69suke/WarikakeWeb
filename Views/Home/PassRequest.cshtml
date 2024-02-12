@@ -1,0 +1,49 @@
+﻿@model WarikakeWeb.ViewModel.PassRequestDisp
+@{
+    ViewData["Title"] = "一時キーログイン申請";
+}
+<h1>一時キーログイン申請</h1>
+
+<h4>一時キー</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @if (ViewBag.PassTempKey != null)
+        {
+            <div>作成した一時キーはご自身で保存し、誰にも教えないでください。</div>
+            <div>グループリーダーに承認をお願いしてください。</div>
+            <div>※一時キーの有効期限は明日いっぱいです。 </div>
+            <h4>@ViewBag.PassTempKey</h4>
+        }
+        else
+        {
+            <div>１回だけ有効な一時キーを発行します。</div>
+            <div>本人確認のため、一時キーを作成後グループリーダーには別途ご自身で承認以来の連絡をしてください。</div>
+            <div>承認前の一時キーは無効です。必ず承認後に一時キーを使用してください。</div>
+            <form asp-action="PassRequest">
+                <div class="form-group">
+                    <label asp-for="GroupName" class="control-label"></label>
+                    <input asp-for="GroupName" class="form-control" />
+                    <span asp-validation-for="GroupName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="EMail" class="control-label"></label>
+                    <input asp-for="EMail" class="form-control" />
+                    <span asp-validation-for="EMail" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="一時キー作成" class="btn btn-primary" />
+                </div>
+            </form>
+        }
+    </div>
+    <div>
+        <a asp-action="TempKeyLogin">１回だけ有効な一時キーでパスワードリセットする</a>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

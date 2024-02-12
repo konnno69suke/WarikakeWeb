@@ -47,6 +47,13 @@ namespace WarikakeWeb.Models
             return user;
         }
 
+        // ログインIDでユーザーを取得
+        public MUser GetUserByEmail(string eMail)
+        {
+            MUser user = _context.MUser.Where(u => u.Email == eMail && u.status == 1).FirstOrDefault();
+            return user;
+        }
+
         // ログインIDとパスワードでユーザーを取得
         public MUser GetUserByEmailPassWord(string eMail, string password)
         {
@@ -143,7 +150,6 @@ namespace WarikakeWeb.Models
             mMember.UpdatePg = currPg;
             Serilog.Log.Information($"SQL param: MMember:{mMember.ToString()}");
             _context.Add(mMember);
-            _context.SaveChanges();
 
             _context.SaveChanges();
         }
@@ -247,6 +253,8 @@ namespace WarikakeWeb.Models
             existingUser.UpdatePg = currPg;
             Serilog.Log.Information($"SQL param: MUser: {existingUser.ToString()}");
             _context.Update(existingUser);
+
+            _context.SaveChanges();
         }
         // ステータス更新処理
         public void StatusChangeLogic(int GroupId, int UserId, int Id)
@@ -285,6 +293,8 @@ namespace WarikakeWeb.Models
             currMember.UpdatePg = currPg;
             Serilog.Log.Information($"SQL param: MUser: {currMember.ToString()}");
             _context.MMember.Update(currMember);
+
+            _context.SaveChanges();
         }
 
 

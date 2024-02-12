@@ -1,0 +1,49 @@
+﻿@model IEnumerable<WarikakeWeb.ViewModel.RequestDisp>
+
+@{
+    ViewData["Title"] = "承認待ち一覧";
+}
+
+<h1>グループ一覧承認待ち一覧</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.TypeName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ReqUserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LimitDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StatusName)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TypeName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ReqUserName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LimitDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.StatusName)
+                </td>
+                <td>
+                    <a asp-action="Agreement" asp-route-id="@item.RequestId">確認</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
